@@ -1,0 +1,174 @@
+npm warn config production Use `--omit=dev` instead.
+npm notice run proggaa-telegram-bot@0.1.0 test
+npm notice run vitest run
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mE:/proggaa-bot-updated[39m
+
+ [32mÔ£ô[39m tests/group-service.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/linking.test.ts [2m([22m[2m8 tests[22m[2m)[22m[90m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/ai-and-admin-services.test.ts [2m([22m[2m12 tests[22m[2m)[22m[90m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/mock-services.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/support-tickets.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 22[2mms[22m[39m
+ [32mÔ£ô[39m tests/wizard-and-notifications.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/validation.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/teacher-admin-completion.test.ts [2m([22m[2m5 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/guards.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/persistence.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 63[2mms[22m[39m
+ [32mÔ£ô[39m tests/integration-commands.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 119[2mms[22m[39m
+ [32mÔ£ô[39m tests/formatters.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 22[2mms[22m[39m
+ [32mÔ£ô[39m tests/deep-links.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 3[2mms[22m[39m
+stderr | tests/e2e-bot.test.ts > end-to-end: /start > shows the unlinked welcome screen for a brand-new user
+{"ts":"2026-08-19T11:25:43.195Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at sendStartScreen (E:\\proggaa-bot-updated\\src\\bot\\commands\\start.ts:23:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\start.ts:9:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: /start > never treats the Telegram username as identity
+{"ts":"2026-08-19T11:25:43.563Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at sendStartScreen (E:\\proggaa-bot-updated\\src\\bot\\commands\\start.ts:23:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\start.ts:9:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: account linking flow > links a user via /link + token message, then /start shows the personalized screen
+{"ts":"2026-08-19T11:25:43.941Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at handleLinkStart (E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:38:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:21:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: account linking flow > rejects an invalid token end to end
+{"ts":"2026-08-19T11:25:44.300Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at handleLinkStart (E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:38:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:21:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: role authorization > blocks an unlinked user from /admin
+{"ts":"2026-08-19T11:25:44.679Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at requireLinked (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:13:5)\n    at Module.requireRole (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:22:7)\n    at sendAdminDashboard (E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:290:7)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:16:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: role authorization > blocks a linked STUDENT from /admin
+{"ts":"2026-08-19T11:25:45.045Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at handleLinkStart (E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:38:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:21:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: role authorization > blocks a linked STUDENT from /admin
+{"ts":"2026-08-19T11:25:45.406Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at requireLinked (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:13:5)\n    at Module.requireRole (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:22:7)\n    at sendAdminDashboard (E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:290:7)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:16:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: role authorization > allows a linked ADMIN through /admin and shows platform stats
+{"ts":"2026-08-19T11:25:45.764Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at handleLinkStart (E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:38:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:21:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: role authorization > allows a linked ADMIN through /admin and shows platform stats
+{"ts":"2026-08-19T11:25:46.131Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at requireLinked (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:13:5)\n    at Module.requireRole (E:\\proggaa-bot-updated\\src\\bot\\middleware\\guards.ts:22:7)\n    at sendAdminDashboard (E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:290:7)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\admin.ts:16:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: payment approval requires confirmation > does not mutate the payment on the first tap, only after confirm
+{"ts":"2026-08-19T11:25:46.489Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at handleLinkStart (E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:38:3)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\link.ts:21:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21"}
+
+stderr | tests/e2e-bot.test.ts > end-to-end: payment approval requires confirmation > does not mutate the payment on the first tap, only after confirm
+{"ts":"2026-08-19T11:25:46.849Z","level":"error","message":"unhandled_error","error":"404: Not Found","stack":"Error: 404: Not Found\n    at Telegram.callApi (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\core\\network\\client.js:315:19)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at E:\\proggaa-bot-updated\\src\\bot\\commands\\payments.ts:91:5\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)\n    at E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:519:21\n    at execute (E:\\proggaa-bot-updated\\node_modules\\telegraf\\lib\\composer.js:518:17)"}
+
+ [31mÔØ»[39m tests/e2e-bot.test.ts [2m([22m[2m8 tests[22m[2m | [22m[31m8 failed[39m[2m)[22m[33m 4475[2mms[22m[39m
+[31m   [31m├ù[31m end-to-end: /start[2m > [22mshows the unlinked welcome screen for a brand-new user[33m 823[2mms[22m[31m[39m
+[31m     ÔåÆ expected "spy" to be called 1 times, but got 0 times[39m
+[31m   [31m├ù[31m end-to-end: /start[2m > [22mnever treats the Telegram username as identity[33m 374[2mms[22m[31m[39m
+[31m     ÔåÆ undefined is not iterable (cannot read property Symbol(Symbol.iterator))[39m
+[31m   [31m├ù[31m end-to-end: account linking flow[2m > [22mlinks a user via /link + token message, then /start shows the personalized screen[33m 366[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+[31m   [31m├ù[31m end-to-end: account linking flow[2m > [22mrejects an invalid token end to end[33m 364[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+[31m   [31m├ù[31m end-to-end: role authorization[2m > [22mblocks an unlinked user from /admin[33m 378[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+[31m   [31m├ù[31m end-to-end: role authorization[2m > [22mblocks a linked STUDENT from /admin[33m 720[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+[31m   [31m├ù[31m end-to-end: role authorization[2m > [22mallows a linked ADMIN through /admin and shows platform stats[33m 724[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+[31m   [31m├ù[31m end-to-end: payment approval requires confirmation[2m > [22mdoes not mutate the payment on the first tap, only after confirm[33m 723[2mms[22m[31m[39m
+[31m     ÔåÆ the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 8 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: /start > shows the unlinked welcome screen for a brand-new user
+AssertionError: expected "spy" to be called 1 times, but got 0 times
+ ÔØ» tests/e2e-bot.test.ts:112:25
+    110|     await bot.handleUpdate(textUpdate(userId, userId, "/start"));
+    111| 
+    112|     expect(sendMessage).toHaveBeenCalledTimes(1);
+       |                         ^
+    113|     const [, text] = sendMessage.mock.calls[0];
+    114|     expect(text).toContain("Welcome to Proggaa");
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: /start > never treats the Telegram username as identity
+TypeError: undefined is not iterable (cannot read property Symbol(Symbol.iterator))
+ ÔØ» tests/e2e-bot.test.ts:127:22
+    125|     await bot.handleUpdate(update);
+    126| 
+    127|     const [, text] = sendMessage.mock.calls[0];
+       |                      ^
+    128|     expect(text).toContain("Welcome to Proggaa"); // unlinked screen, ÔÇª
+    129|   });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: account linking flow > links a user via /link + token message, then /start shows the personalized screen
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:139:48
+    137| 
+    138|     await bot.handleUpdate(textUpdate(userId, userId, "/link", 1));
+    139|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("Connect yourÔÇª
+       |                                                ^
+    140| 
+    141|     await bot.handleUpdate(textUpdate(userId, userId, token, 2));
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: account linking flow > rejects an invalid token end to end
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:155:48
+    153|     await bot.handleUpdate(textUpdate(userId, userId, "NOT-A-REAL-TOKEÔÇª
+    154| 
+    155|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("invalid or hÔÇª
+       |                                                ^
+    156|   });
+    157| });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: role authorization > blocks an unlinked user from /admin
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:166:48
+    164|     await bot.handleUpdate(textUpdate(userId, userId, "/admin"));
+    165| 
+    166|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("Use /link");
+       |                                                ^
+    167|   });
+    168| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: role authorization > blocks a linked STUDENT from /admin
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:178:48
+    176|     await bot.handleUpdate(textUpdate(userId, userId, "/admin", 3));
+    177| 
+    178|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("permission");
+       |                                                ^
+    179|   });
+    180| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: role authorization > allows a linked ADMIN through /admin and shows platform stats
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:190:48
+    188|     await bot.handleUpdate(textUpdate(userId, userId, "/admin", 3));
+    189| 
+    190|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("Proggaa AdmiÔÇª
+       |                                                ^
+    191|   });
+    192| });
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/8]ÔÄ»
+
+ FAIL  tests/e2e-bot.test.ts > end-to-end: payment approval requires confirmation > does not mutate the payment on the first tap, only after confirm
+AssertionError: the given combination of arguments (undefined and string) is invalid for this assertion. You can use an array, a map, an object, a set, a string, or a weakset instead of a string
+ ÔØ» tests/e2e-bot.test.ts:205:48
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[90m (14)[39m
+    203|     // First tap: "ask" ÔÇö must show a confirm prompt, not approve anytÔÇª
+    204|     await bot.handleUpdate(callbackUpdate(userId, userId, "payment:appÔÇª
+    205|     expect(sendMessage.mock.calls.at(-1)?.[1]).toContain("Approve thisÔÇª
+       |                                                ^
+    206| 
+    207|     // Second tap: "confirm" ÔÇö this is the one that actually calls theÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/8]ÔÄ»
+
+[2m      Tests [22m [1m[31m8 failed[39m[22m[2m | [22m[1m[32m95 passed[39m[22m[90m (103)[39m
+[2m   Start at [22m 17:25:41
+[2m   Duration [22m 5.99s[2m (transform 1.24s, setup 145ms, collect 2.92s, tests 4.78s, environment 4ms, prepare 2.21s)[22m
+
