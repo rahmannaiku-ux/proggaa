@@ -4,6 +4,7 @@ import { env } from "./config/env";
 import { logger } from "./utils/logger";
 import { buildServiceContainer } from "./services/container";
 import { createBot } from "./bot/bot";
+import { startKeepAlive } from "./utils/keepAlive";
 import { ProggaaEventReceiver } from "./services/events/ProggaaEventReceiver";
 import { createEventsHandler, EVENTS_PATH } from "./services/events/httpHandler";
 
@@ -76,6 +77,10 @@ async function startWebhook(bot: ReturnType<typeof createBot>, eventsHandler: Ev
 
   server.listen(env.PORT, () => {
     logger.info("bot.started", { env: env.NODE_ENV, mode: "webhook", webhookUrl, port: env.PORT });
+    if (env.KEEP_ALIVE === "on") {
+      startKeepAlive(`${baseUrl}/healthz`);
+      logger.info("keepalive.started", { url: `${baseUrl}/healthz` });
+    }
     // eslint-disable-next-line no-console
     console.log(`🎓 Proggaa bot is running (${env.NODE_ENV}, webhook) on port ${env.PORT}.`);
   });

@@ -84,6 +84,10 @@ const envSchema = z.object({
   // BOT_MODE=webhook. Generate one with: openssl rand -hex 20
   WEBHOOK_SECRET_PATH: z.preprocess(blankToUndefined, z.string().min(8).optional()),
 
+  // Webhook mode only: ping our own public URL every 10 minutes so a free
+  // Render instance does not fall asleep. Set to "off" on a paid/always-on host.
+  KEEP_ALIVE: z.preprocess(blankToUndefined, z.enum(["on", "off"]).default("on")),
+
   // Port the HTTP server listens on in webhook mode. Render sets this
   // automatically; PORT here is just the fallback for local testing.
   PORT: z.coerce.number().default(3000),
