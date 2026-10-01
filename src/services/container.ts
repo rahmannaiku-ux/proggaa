@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { logger } from "../utils/logger";
 import { Telegram } from "telegraf";
 import type {
   AnnouncementService,
@@ -101,6 +102,17 @@ export function buildServiceContainer(): ServiceContainer {
     achievement: pick(env.PROGGAA_ACHIEVEMENT_PROVIDER),
     link: pick(env.PROGGAA_LINK_PROVIDER),
   };
+
+  // Say plainly which services run on demo data, so a stray per-service override
+  // (for example PROGGAA_LINK_PROVIDER=mock left in .env) is visible at startup.
+  logger.info("services.providers", providers);
+  const mixed = Object.values(providers).some((p) => p !== env.PROGGAA_PROVIDER);
+  if (mixed) {
+    logger.warn("services.providers_mixed", {
+      note: "Some services differ from PROGGAA_PROVIDER. Blank out the PROGGAA_<SERVICE>_PROVIDER lines in .env if that is not intended.",
+      globalProvider: env.PROGGAA_PROVIDER,
+    });
+  }
 
   // Only built when some service really uses it, so the demo setup needs no API settings.
   let apiClient: ApiClient | null = null;
