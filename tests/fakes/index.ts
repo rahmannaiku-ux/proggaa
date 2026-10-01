@@ -1,25 +1,35 @@
 import type {
   Achievement,
   AdminStatistics,
+  Announcement,
+  CalendarEntry,
+  CatalogMissionDetail,
+  CheckoutInstructions,
   Course,
   ExamResult,
   ExamSummary,
   FeedNotification,
+  LeaderboardView,
   LiveClass,
   LiveExamStatus,
+  Medal,
+  MissionOutline,
   NotificationCategory,
   NotificationPreferences,
+  OperationOutline,
+  PatrolDetail,
   Payment,
   ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
+  StoreView,
   TeacherAnalytics,
 } from "../../src/types/domain";
 import type { ServiceContainer } from "../../src/services/container";
 import type { FeedCursor, LinkTokenResult, TelegramLinkService } from "../../src/services/proggaa/interfaces";
 import { DeepLinkService } from "../../src/services/deep-links/DeepLinkService";
 import { InMemoryGroupService } from "../../src/services/groups/GroupService";
-import { AlreadyLinkedError, InvalidOrExpiredTokenError, NotFoundError, UnauthorizedError } from "../../src/services/proggaa/errors";
+import { AlreadyLinkedError, InvalidOrExpiredTokenError, NotFoundError, UnauthorizedError, ValidationError } from "../../src/services/proggaa/errors";
 
 /**
  * In-memory stand-ins for Proggaa, used only by the tests. Production code has
@@ -70,6 +80,97 @@ export const LIVE_EXAMS: LiveExamStatus[] = [
 ];
 
 export const STATS: AdminStatistics = { studentCount: 1248, teacherCount: 82, courseCount: 126, examCount: 342, liveExamCount: 1, todaysPaymentsTotal: 48500, currency: "BDT" };
+
+export const MISSION_OUTLINE: MissionOutline = {
+  id: "course_physics",
+  title: "Physics 1st Paper",
+  isFree: false,
+  enrolled: true,
+  progressPercent: 50,
+  operations: [
+    { id: "op_vectors", title: "Vectors", patrolCount: 2, completedCount: 1 },
+    { id: "op_waves", title: "Waves", patrolCount: 1, completedCount: 0 },
+  ],
+  resume: { patrolId: "pt_2", title: "Dot product" },
+};
+
+export const OPERATION: OperationOutline = {
+  id: "op_vectors",
+  title: "Vectors",
+  missionId: "course_physics",
+  missionTitle: "Physics 1st Paper",
+  chapters: [
+    {
+      id: "ch_1",
+      title: "Basics",
+      classTypes: [
+        {
+          id: "g_1",
+          title: "Foundation Class",
+          patrols: [
+            { id: "pt_1", title: "Intro_to vectors", durationSeconds: 600, isPreview: false, isLive: false, completed: true, locked: false },
+            { id: "pt_2", title: "Dot product", durationSeconds: 900, isPreview: false, isLive: false, completed: false, locked: false },
+            { id: "pt_3", title: "Cross product", durationSeconds: 900, isPreview: false, isLive: false, completed: false, locked: true },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const PATROL: PatrolDetail = {
+  id: "pt_2",
+  title: "Dot product",
+  description: "How the dot product works.",
+  durationSeconds: 900,
+  isLive: false,
+  missionId: "course_physics",
+  missionTitle: "Physics 1st Paper",
+  operationId: "op_vectors",
+  operationTitle: "Vectors",
+  completed: false,
+  watchedSeconds: 120,
+  resources: [{ id: "r1", title: "Slides.pdf", type: "PDF", downloadable: true }],
+  notes: [],
+  previous: { id: "pt_1", title: "Intro_to vectors" },
+  next: { id: "pt_3", title: "Cross product" },
+  path: "/missions/course_physics/operations/op_vectors/chapters/ch_1/groups/g_1/patrols/pt_2",
+};
+
+export const CATALOG_PAID: CatalogMissionDetail = {
+  id: "course_chem",
+  title: "Chemistry_Basics",
+  level: "BEGINNER",
+  isFree: false,
+  price: 1000,
+  finalPrice: 800,
+  durationMinutes: 600,
+  mentorName: "Kabir Hossain",
+  enrolled: false,
+  description: "Everything about bonding.",
+};
+export const CATALOG_FREE: CatalogMissionDetail = { ...CATALOG_PAID, id: "course_free", title: "Study skills", isFree: true, price: 0, finalPrice: 0 };
+
+export const STORE: StoreView = {
+  coinBalance: 250,
+  items: [
+    { id: "item_pdf", title: "Formula sheet", description: "All formulas.", type: "PDF", priceCoins: 100, owned: false },
+    { id: "item_big", title: "Exclusive class", description: "A bonus class.", type: "EXCLUSIVE_CLASS", priceCoins: 900, owned: false },
+  ],
+};
+
+export const CALENDAR: CalendarEntry[] = [
+  { id: "cal_1", kind: "live_class", title: "Waves revision", startsAt: hoursFromNow(3), endsAt: hoursFromNow(5), missionTitle: "Physics 1st Paper" },
+];
+export const LEADERBOARD: LeaderboardView = {
+  schedule: "NEVER",
+  top: [
+    { rank: 1, userId: "u_top", name: "Top Hero", xp: 5000, level: 9, streakDays: 30 },
+    { rank: 2, userId: STUDENT.id, name: STUDENT.name, xp: 320, level: 4, streakDays: 12 },
+  ],
+};
+export const MEDALS: Medal[] = [{ id: "m1", missionTitle: "Physics 1st Paper", issuedAt: hoursFromNow(-48), verifyPath: "/certificates/verify/ABC-123" }];
+export const ANNOUNCEMENTS: Announcement[] = [{ id: "an1", title: "Class moved", body: "Tomorrow at 5pm.", missionTitle: "Physics 1st Paper", createdAt: hoursFromNow(-2) }];
 
 export function freshPayments(): Payment[] {
   return [
@@ -141,7 +242,13 @@ export class FakeFeed {
 }
 
 /** Who may do what, mirroring the website's checks, so authorization tests are meaningful. */
-export function buildFakeContainer(overrides: Partial<ServiceContainer> = {}): ServiceContainer & { link: FakeLinkService; feed: FakeFeed; payments: Payment[] } {
+export type Calls = { name: string; args: unknown[] }[];
+
+export function buildFakeContainer(
+  overrides: Partial<ServiceContainer> = {}
+): ServiceContainer & { link: FakeLinkService; feed: FakeFeed; payments: Payment[]; calls: Calls } {
+  const calls: Calls = [];
+  const record = (name: string, ...args: unknown[]) => void calls.push({ name, args });
   const link = new FakeLinkService();
   const feed = new FakeFeed();
   const payments = freshPayments();
@@ -192,6 +299,53 @@ export function buildFakeContainer(overrides: Partial<ServiceContainer> = {}): S
       },
     },
     liveClassService: { getLiveClasses: async () => LIVE_CLASSES },
+    learningService: {
+      getMission: async (_u, id) => (id === MISSION_OUTLINE.id ? MISSION_OUTLINE : null),
+      getOperation: async (_u, id) => (id === OPERATION.id ? OPERATION : null),
+      getPatrol: async (_u, id) => {
+        if (id === "pt_3") throw new UnauthorizedError("This Patrol is locked. Enrol in the Mission to open it.");
+        return id === PATROL.id ? PATROL : null;
+      },
+      addNote: async (u, id, text) => record("addNote", u, id, text),
+    },
+    catalogService: {
+      browse: async (_u, o) => ({ page: o.page ?? 1, pageSize: 6, total: 2, missions: [CATALOG_PAID, CATALOG_FREE].filter((m) => !o.query || m.title.toLowerCase().includes(o.query.toLowerCase())) }),
+      getMission: async (_u, id) => [CATALOG_PAID, CATALOG_FREE].find((m) => m.id === id) ?? null,
+      enrollFree: async (u, id) => record("enrollFree", u, id),
+      checkout: async (u, id, coupon): Promise<CheckoutInstructions> => {
+        record("checkout", u, id, coupon);
+        if (coupon === "BAD") throw new ValidationError("That coupon isn't valid.");
+        return { paymentId: "pay_new", amount: coupon ? 500 : 800, currency: "BDT", reference: "PRG-ABC123", receivingNumber: "01700000000", provider: "BKASH", couponCode: coupon, missionTitle: "Chemistry_Basics", fullyDiscounted: coupon === "FREE100" };
+      },
+      submitTransactionId: async (u, id, txid) => record("submitTransactionId", u, id, txid),
+    },
+    storeService: {
+      getStore: async () => STORE,
+      purchase: async (u, id) => {
+        record("purchase", u, id);
+        const item = STORE.items.find((i) => i.id === id);
+        if (!item) throw new NotFoundError("Item");
+        if (item.priceCoins > STORE.coinBalance) throw new ValidationError("You don't have enough Proggy Coins.");
+        return { itemTitle: item.title };
+      },
+    },
+    communityService: {
+      getCalendar: async () => CALENDAR,
+      getLeaderboard: async () => LEADERBOARD,
+      getMedals: async () => MEDALS,
+      getAnnouncements: async () => ANNOUNCEMENTS,
+    },
+    mentorToolsService: {
+      announce: async (u, m, t, b) => record("announce", u, m, t, b),
+      grantAccess: async (u, m, who) => {
+        record("grantAccess", u, m, who);
+        return { heroLabel: who, alreadyEnrolled: false };
+      },
+      issueMedal: async (u, m, who) => {
+        record("issueMedal", u, m, who);
+        return { heroLabel: who, alreadyIssued: false };
+      },
+    },
     notificationService: {
       getRecentNotifications: async (): Promise<ProggaaNotification[]> => [
         { id: "n1", category: "RESULTS", title: "Result posted", body: "Chapter 4 Test: 84%", createdAt: hoursFromNow(-1) },
@@ -215,5 +369,5 @@ export function buildFakeContainer(overrides: Partial<ServiceContainer> = {}): S
     groupService: new InMemoryGroupService(),
     ...overrides,
   };
-  return Object.assign(container, { link, feed, payments });
+  return Object.assign(container, { link, feed, payments, calls });
 }

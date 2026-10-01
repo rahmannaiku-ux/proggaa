@@ -17,6 +17,8 @@ export interface BotSession {
     data: Record<string, string>;
     startedAt: number; // epoch ms, used to expire stale flows
   };
+  /** The Mission search the hero is browsing, so paging keeps the same search. */
+  catalogQuery?: string;
   /** Epoch ms of the last update, so idle sessions can be dropped. */
   lastSeenAt?: number;
 }

@@ -16,18 +16,29 @@
 import type {
   Achievement,
   AdminStatistics,
+  Announcement,
+  CalendarEntry,
+  CatalogMissionDetail,
+  CatalogPage,
+  CheckoutInstructions,
   Course,
   ExamResult,
   ExamSummary,
   FeedNotification,
+  LeaderboardView,
   LiveClass,
   LiveExamStatus,
+  Medal,
+  MissionOutline,
   NotificationCategory,
   NotificationPreferences,
+  OperationOutline,
+  PatrolDetail,
   Payment,
   ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
+  StoreView,
   TeacherAnalytics,
 } from "../../types/domain";
 
@@ -80,6 +91,48 @@ export interface ProggaaLiveClassService {
 export interface ProggaaNotificationService {
   /** The website's own latest notifications for this person. */
   getRecentNotifications(proggaaUserId: string, limit?: number): Promise<ProggaaNotification[]>;
+}
+
+/** Reading a Mission the way a hero does: Operations, then Patrols, then one Patrol. */
+export interface ProggaaLearningService {
+  getMission(proggaaUserId: string, missionId: string): Promise<MissionOutline | null>;
+  getOperation(proggaaUserId: string, operationId: string): Promise<OperationOutline | null>;
+  /** Null when the Patrol does not exist; throws UnauthorizedError when it is locked for this hero. */
+  getPatrol(proggaaUserId: string, patrolId: string): Promise<PatrolDetail | null>;
+  addNote(proggaaUserId: string, patrolId: string, text: string): Promise<void>;
+}
+
+/** Finding Missions, enrolling and paying. Prices and rules all come from Proggaa. */
+export interface ProggaaCatalogService {
+  browse(proggaaUserId: string, options: { query?: string; page?: number }): Promise<CatalogPage>;
+  getMission(proggaaUserId: string, missionId: string): Promise<CatalogMissionDetail | null>;
+  enrollFree(proggaaUserId: string, missionId: string): Promise<void>;
+  /** Starts (or returns the open) payment for a paid Mission. */
+  checkout(proggaaUserId: string, missionId: string, couponCode?: string): Promise<CheckoutInstructions>;
+  /** Sends the hero's own Transaction ID for their open payment. */
+  submitTransactionId(proggaaUserId: string, paymentId: string, transactionId: string): Promise<void>;
+}
+
+/** The Proggy Store, paid for in Proggy Coins. */
+export interface ProggaaStoreService {
+  getStore(proggaaUserId: string): Promise<StoreView>;
+  /** Spends coins. The bot only calls this after the hero confirmed. */
+  purchase(proggaaUserId: string, itemId: string): Promise<{ itemTitle: string }>;
+}
+
+export interface ProggaaCommunityService {
+  getCalendar(proggaaUserId: string): Promise<CalendarEntry[]>;
+  getLeaderboard(proggaaUserId: string): Promise<LeaderboardView>;
+  getMedals(proggaaUserId: string): Promise<Medal[]>;
+  getAnnouncements(proggaaUserId: string): Promise<Announcement[]>;
+}
+
+/** What a Mentor (or admin) can do from Telegram. Each action is confirmed first and checked by Proggaa. */
+export interface ProggaaMentorToolsService {
+  announce(mentorProggaaUserId: string, missionId: string, title: string, body: string): Promise<void>;
+  /** `identifier` is the hero's email or phone. Returns a short description of what happened. */
+  grantAccess(mentorProggaaUserId: string, missionId: string, identifier: string): Promise<{ heroLabel: string; alreadyEnrolled: boolean }>;
+  issueMedal(mentorProggaaUserId: string, missionId: string, identifier: string): Promise<{ heroLabel: string; alreadyIssued: boolean }>;
 }
 
 /** Where to start reading the website's notification feed from. */

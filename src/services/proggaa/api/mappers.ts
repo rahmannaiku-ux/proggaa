@@ -1,17 +1,30 @@
 import type {
   Achievement,
+  Announcement,
+  CalendarEntry,
+  CatalogMission,
+  CatalogMissionDetail,
+  CatalogPage,
+  CheckoutInstructions,
   Course,
   ExamResult,
   ExamStatus,
   ExamSummary,
   FeedNotification,
+  LeaderboardEntry,
+  LeaderboardView,
   LiveClass,
+  Medal,
+  MissionOutline,
   NotificationCategory,
+  OperationOutline,
+  PatrolDetail,
   Payment,
   PaymentStatus,
   ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
+  StoreView,
 } from "../../../types/domain";
 
 /**
@@ -173,6 +186,9 @@ export interface WebPayment {
   amountCents: number;
   currency: string;
   transactionId?: string | null;
+  paymentReference?: string | null;
+  receivingNumber?: string | null;
+  mfsProvider?: string | null;
   createdAt: string;
   course?: { id: string; title: string } | null;
   user?: { id: string; firstName: string; lastName: string } | null;
@@ -194,6 +210,9 @@ export function mapPayment(p: WebPayment): Payment {
     amount: p.amountCents / 100, // the website stores poisha, the bot shows taka
     currency: p.currency,
     transactionId: p.transactionId ?? "",
+    reference: p.paymentReference ?? undefined,
+    receivingNumber: p.receivingNumber ?? undefined,
+    provider: p.mfsProvider ?? undefined,
     status: mapPaymentStatus(p.status),
     createdAt: new Date(p.createdAt).toISOString(),
   };
@@ -301,4 +320,195 @@ export interface WebFeedItem extends WebNotification {
 
 export function mapFeedItem(n: WebFeedItem): FeedNotification {
   return { ...mapNotification(n), proggaaUserId: n.userId, telegramId: n.telegramId };
+}
+
+// --- learning ----------------------------------------------------------------
+
+export interface WebMission {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  isFree: boolean;
+  enrolled: boolean;
+  progressPct: number;
+  operations: { id: string; title: string; patrolCount: number; completedCount: number }[];
+  resume?: { patrolId: string; title: string } | null;
+}
+
+export function mapMissionOutline(m: WebMission): MissionOutline {
+  return {
+    id: m.id,
+    title: m.title,
+    subtitle: m.subtitle ?? undefined,
+    isFree: m.isFree,
+    enrolled: m.enrolled,
+    progressPercent: Math.round(m.progressPct),
+    operations: m.operations,
+    resume: m.resume ?? undefined,
+  };
+}
+
+export type WebOperation = {
+  id: string;
+  title: string;
+  missionId: string;
+  missionTitle: string;
+  chapters: {
+    id: string;
+    title: string;
+    classTypes: {
+      id: string;
+      title: string;
+      patrols: { id: string; title: string; durationSeconds: number; isPreview: boolean; isLive: boolean; completed: boolean; locked: boolean }[];
+    }[];
+  }[];
+};
+
+export function mapOperationOutline(o: WebOperation): OperationOutline {
+  return o;
+}
+
+export interface WebPatrol {
+  id: string;
+  title: string;
+  description?: string | null;
+  durationSeconds: number;
+  isLive: boolean;
+  scheduledStart?: string | null;
+  missionId: string;
+  missionTitle: string;
+  operationId: string;
+  operationTitle: string;
+  completed: boolean;
+  watchedSeconds: number;
+  resources: { id: string; title: string; type: string; downloadable: boolean }[];
+  notes: { id: string; content: string; createdAt: string }[];
+  previous?: { id: string; title: string } | null;
+  next?: { id: string; title: string } | null;
+  path: string;
+}
+
+export function mapPatrol(p: WebPatrol): PatrolDetail {
+  return {
+    ...p,
+    description: p.description ?? undefined,
+    scheduledStart: p.scheduledStart ? new Date(p.scheduledStart).toISOString() : undefined,
+    previous: p.previous ?? undefined,
+    next: p.next ?? undefined,
+    // Only a plain path on the Proggaa site is ever used for a link.
+    path: safeLinkPath(p.path) ?? "/dashboard",
+  };
+}
+
+// --- catalog, checkout, store ---------------------------------------------------
+
+export interface WebCatalogMission {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  level: string;
+  isFree: boolean;
+  priceCents: number;
+  finalPriceCents: number;
+  durationMinutes: number;
+  mentorName: string;
+  enrolled: boolean;
+  description?: string;
+  openPayment?: { id: string; status: string } | null;
+}
+
+export function mapCatalogMission(c: WebCatalogMission): CatalogMission {
+  return {
+    id: c.id,
+    title: c.title,
+    subtitle: c.subtitle ?? undefined,
+    level: c.level,
+    isFree: c.isFree,
+    price: c.priceCents / 100,
+    finalPrice: c.finalPriceCents / 100,
+    durationMinutes: c.durationMinutes,
+    mentorName: c.mentorName,
+    enrolled: c.enrolled,
+  };
+}
+
+export function mapCatalogDetail(c: WebCatalogMission): CatalogMissionDetail {
+  return { ...mapCatalogMission(c), description: c.description ?? "", openPayment: c.openPayment ?? undefined };
+}
+
+export function mapCatalogPage(r: { page: number; pageSize: number; total: number; missions: WebCatalogMission[] }): CatalogPage {
+  return { page: r.page, pageSize: r.pageSize, total: r.total, missions: r.missions.map(mapCatalogMission) };
+}
+
+export interface WebCheckout {
+  id: string;
+  status: string;
+  amountCents: number;
+  currency: string;
+  paymentReference: string;
+  receivingNumber?: string | null;
+  mfsProvider?: string | null;
+  couponCode?: string | null;
+  courseTitle?: string | null;
+}
+
+export function mapCheckout(p: WebCheckout): CheckoutInstructions {
+  return {
+    paymentId: p.id,
+    amount: p.amountCents / 100,
+    currency: p.currency,
+    reference: p.paymentReference,
+    receivingNumber: p.receivingNumber ?? undefined,
+    provider: p.mfsProvider ?? undefined,
+    couponCode: p.couponCode ?? undefined,
+    missionTitle: p.courseTitle ?? "your Mission",
+    fullyDiscounted: p.amountCents <= 0,
+  };
+}
+
+export function mapStore(r: { coinBalance: number; items: { id: string; title: string; description: string; type: string; priceCoins: number; owned: boolean }[] }): StoreView {
+  return { coinBalance: r.coinBalance, items: r.items };
+}
+
+// --- social ------------------------------------------------------------------
+
+export interface WebCalendarItem {
+  id: string;
+  kind: "event" | "live_class" | "assignment_due";
+  title: string;
+  description?: string | null;
+  startAt: string;
+  endAt?: string | null;
+  path?: string | null;
+  missionTitle?: string | null;
+}
+
+export function mapCalendarItem(i: WebCalendarItem): CalendarEntry {
+  return {
+    id: i.id,
+    kind: i.kind,
+    title: i.title,
+    description: i.description ?? undefined,
+    startsAt: new Date(i.startAt).toISOString(),
+    endsAt: i.endAt ? new Date(i.endAt).toISOString() : undefined,
+    path: safeLinkPath(i.path),
+    missionTitle: i.missionTitle ?? undefined,
+  };
+}
+
+export function mapLeaderboard(r: { schedule: string; top: LeaderboardEntry[]; me: LeaderboardEntry | null }): LeaderboardView {
+  return { schedule: r.schedule, top: r.top, me: r.me ?? undefined };
+}
+
+export function mapMedal(m: { id: string; missionTitle: string; issuedAt?: string | null; verifyPath: string }): Medal {
+  return {
+    id: m.id,
+    missionTitle: m.missionTitle,
+    issuedAt: m.issuedAt ? new Date(m.issuedAt).toISOString() : undefined,
+    verifyPath: safeLinkPath(m.verifyPath) ?? "/",
+  };
+}
+
+export function mapAnnouncement(a: { id: string; title: string; body: string; missionTitle?: string | null; createdAt: string }): Announcement {
+  return { id: a.id, title: a.title, body: a.body, missionTitle: a.missionTitle ?? undefined, createdAt: new Date(a.createdAt).toISOString() };
 }

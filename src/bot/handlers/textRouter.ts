@@ -4,6 +4,9 @@ import type { ServiceContainer } from "../../services/container";
 import { handleLinkTextInput } from "../commands/link";
 import { handleGroupAnnouncementTextInput } from "../commands/groupAdmin";
 import { handleRejectReasonTextInput } from "../commands/payments";
+import { handleNoteTextInput } from "../commands/learn";
+import { handleCouponTextInput, handleSearchTextInput, handleTxidTextInput } from "../commands/catalog";
+import { handleToolTextInput } from "../commands/mentorTools";
 import { isWizardExpired, clearWizard } from "./wizard";
 
 /**
@@ -30,6 +33,16 @@ export function registerTextRouter(bot: Telegraf<ProggaaBotContext>, services: S
           return handleRejectReasonTextInput(ctx, services, text);
         case "groupannounce":
           return handleGroupAnnouncementTextInput(ctx, services, text);
+        case "note":
+          return handleNoteTextInput(ctx, services, text);
+        case "search":
+          return handleSearchTextInput(ctx, services, text);
+        case "coupon":
+          return handleCouponTextInput(ctx, services, text);
+        case "txid":
+          return handleTxidTextInput(ctx, services, text);
+        case "tool":
+          return handleToolTextInput(ctx, services, text);
         default:
           clearWizard(ctx);
       }

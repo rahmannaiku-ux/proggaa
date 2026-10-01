@@ -26,6 +26,8 @@ export class DeepLinkService {
   result(resultId: string) { return this.build(`/results/${encodeURIComponent(resultId)}`); }
   liveClasses() { return this.build("/live-classes"); }
   wallet() { return this.build("/wallet"); }
+  calendar() { return this.build("/calendar"); }
+  medals() { return this.build("/medals"); }
   store() { return this.build("/store"); }
   leaderboard() { return this.build("/leaderboard"); }
   notifications() { return this.build("/notifications"); }

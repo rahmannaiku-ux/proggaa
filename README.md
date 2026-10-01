@@ -4,25 +4,30 @@ The Telegram companion of the **Proggaa** learning platform. It is another way i
 everything it shows is read from the Proggaa website, and it keeps no copy of Proggaa's data.
 Design and security notes: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## What heroes get
+## What you can do from Telegram
 
-| Command | |
+Most of Proggaa works inside the chat. Everything is read from, and done through, the website's own code, so the rules
+(prices, coupons, access, coins) are exactly the website's.
+
+| Area | What it does |
 |---|---|
-| `/start` `/link` `/unlink` `/help` | connect (or disconnect) your Proggaa account with a one-time code |
-| `/dashboard` | level, XP, Proggy Coins, streak, next live class and Encounter, Missions to continue |
-| `/missions` (alias `/courses`) | your Missions with progress |
-| `/exams` `/results` | your Encounters and results |
-| `/live` | live and upcoming live classes |
-| `/wallet` | your Proggy Coins |
-| `/achievements` `/progress` `/studyplan` | achievements, overall progress, what is next |
-| `/notifications` `/settings` | latest notifications; choose which ones are sent to Telegram |
-| `/support` | opens Proggaa's Support page |
+| **Account** | `/link` with a one-time code from the website, `/unlink`. |
+| **Study** | `/missions`: open a Mission, then an Operation, then a Patrol (with ✓, 🔒 and live markers). Read a Patrol's description and resources, add a personal note, jump to the previous or next Patrol. |
+| **Join and buy** | `/browse` and `/search`: find Missions, join free ones in one tap, or buy a paid one: optional coupon, see the amount, number and reference, then send your Transaction ID in the chat. `/payments` shows your payments. |
+| **Rewards** | `/dashboard` (level, XP, Proggy Coins, streak), `/wallet`, `/store` (spend Proggy Coins, with confirmation), `/leaderboard`, `/medals` (with verification links), `/achievements`, `/progress`, `/studyplan`. |
+| **Schedule** | `/live` (live and upcoming classes), `/calendar`, `/exams` and `/results` (your Encounters and scores). |
+| **Updates** | `/notifications`, `/announcements`, `/settings` (choose which Proggaa notifications are sent to Telegram), and Proggaa's own notifications arrive in the chat by themselves. |
+| **Mentors** | `/teacher`: your Missions, Encounters, live monitoring, grading counts, analytics; and **Announce to a Mission**, **Grant access**, **Issue a Medal** (preview, then confirm). |
+| **Admins** | `/admin`, `/payments` (verify or reject with a reason), `/stats`, Group Assistant tools. |
 
-**Mentors:** `/teacher` for Missions, Encounters, live monitoring, grading counts and analytics.
-**Admins:** `/admin`, `/payments` (verify or reject with a reason), `/stats`, and Group Assistant tools.
+### What stays on the website, on purpose
+- **Watching the video.** Patrol videos play in Proggaa's protected player, which also measures how much you really watched
+  (that is what completes a Patrol and earns XP). Every Patrol has a "Watch on Proggaa" button; the bot never shows a video link.
+- **Taking an Encounter (exam).** Exams use fullscreen and tab-switch monitoring and time limits that a chat cannot enforce.
+  The bot lists them, reminds you and shows results; the button opens the exam.
+- **Uploading files, editing profile details, the Mission builder, payment devices.**
 
-The bot also **mirrors Proggaa's own notifications** (exam reminders, results, live classes, announcements, payments,
-achievements, streaks) into Telegram. All times are Bangladesh time.
+All times are Bangladesh time.
 
 ## Run it locally
 
@@ -38,7 +43,7 @@ npm run dev              # polling mode
 `/settings/telegram`, press **Generate code**, then send `/link` and the code to the bot.
 
 ```bash
-npm test          # 92 tests, no network
+npm test          # 125 tests, no network
 npm run typecheck
 npm run build     # compiles to dist/
 ```

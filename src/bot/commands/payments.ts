@@ -9,6 +9,7 @@ import { paymentReviewKeyboard } from "../keyboards/cards";
 import { formatPaymentCard } from "../messages/formatters";
 import { ICON, esc, formatTaka, heading } from "../messages/brand";
 import { startWizard, clearWizard } from "../handlers/wizard";
+import { show } from "../screens";
 import { NotFoundError } from "../../services/proggaa/errors";
 import { ENTITY_ID_PATTERN, TEXT_LIMITS, isValidEntityId, validateBoundedText } from "../../utils/validation";
 import { logger } from "../../utils/logger";
@@ -169,13 +170,13 @@ async function sendMyPayment(ctx: ProggaaBotContext, services: ServiceContainer,
     return;
   }
 
-  await ctx.reply(formatPaymentCard(payment), {
-    parse_mode: "Markdown",
-    ...Markup.inlineKeyboard([
-      [Markup.button.url(payment.status === "PENDING" ? "Open payment to send your TXID" : "Open payment on Proggaa", services.deepLinkService.payment(payment.id))],
-      [Markup.button.callback("⬅️ Payments", "menu:payments")],
-    ]),
-  });
+  const waitingForTxid = payment.status === "PENDING" && !payment.transactionId;
+  const rows = [];
+  if (waitingForTxid) rows.push([Markup.button.callback("✅ I've paid: send my Transaction ID", `pay:txid:${payment.id}`)]);
+  rows.push([Markup.button.url("🌐 Open payment on Proggaa", services.deepLinkService.payment(payment.id))]);
+  rows.push([Markup.button.callback("⬅️ Payments", "menu:payments")]);
+
+  await show(ctx, formatPaymentCard(payment), { parse_mode: "Markdown", ...Markup.inlineKeyboard(rows) });
 }
 
 function statusIcon(payment: Payment): string {

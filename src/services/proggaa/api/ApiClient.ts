@@ -103,7 +103,12 @@ export class ApiClient {
       throw tag(new ProggaaServiceError("The Proggaa website rejected the bot's API key.", "BOT_API_AUTH"));
     }
     if (res.status === 403) throw tag(new UnauthorizedError(message));
-    if (res.status === 404) throw tag(new NotFoundError(message ?? "That item"));
+    if (res.status === 404) {
+      // The website's own sentence is already complete; NotFoundError would add " not found." to it.
+      const notFound = new NotFoundError(message ?? "That item");
+      if (message) notFound.message = message;
+      throw tag(notFound);
+    }
     if (res.status === 400 || res.status === 409 || res.status === 410 || res.status === 429) {
       // The website's own wording is written for people, so pass it on.
       throw tag(new ValidationError(message ?? "The request was not accepted."));

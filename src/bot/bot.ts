@@ -24,6 +24,11 @@ import { registerProgressCommand } from "./commands/progress";
 import { registerNotificationsCommand } from "./commands/notifications";
 import { registerPaymentsCommand } from "./commands/payments";
 import { registerSupportCommand } from "./commands/support";
+import { registerLearnCommands } from "./commands/learn";
+import { registerCatalogCommands } from "./commands/catalog";
+import { registerStoreCommands } from "./commands/store";
+import { registerSocialCommands } from "./commands/social";
+import { registerMentorTools } from "./commands/mentorTools";
 import { registerTeacherCommand } from "./commands/teacher";
 import { registerAdminCommand } from "./commands/admin";
 import { registerGroupAssistant } from "./commands/group";
@@ -61,9 +66,14 @@ export function createBot(services: ServiceContainer, token: string = env.BOT_TO
   registerNotificationsCommand(bot, services);
   registerPaymentsCommand(bot, services);
   registerSupportCommand(bot, services);
+  registerLearnCommands(bot, services);
+  registerCatalogCommands(bot, services);
+  registerStoreCommands(bot, services);
+  registerSocialCommands(bot, services);
 
   // Mentors and admins
   registerTeacherCommand(bot, services);
+  registerMentorTools(bot, services);
   registerAdminCommand(bot, services);
 
   // Group Assistant: the same bot in a configured Telegram group. Registered

@@ -60,11 +60,18 @@ call these website routes with `X-Api-Key`:
 | Link / unlink / who is linked | `/api/telegram/link` (POST, DELETE, GET) |
 | Profile, XP, level, coins, streak | `GET /api/bot/users/:id` |
 | Missions, Encounters, results, achievements | `/api/bot/courses`, `/exams`, `/results`, `/achievements` |
-| Live classes | `GET /api/bot/live-classes` |
+| Study: Mission, Operation, Patrol, notes | `GET /api/bot/missions/:id`, `/operations/:id`, `/patrols/:id`, `POST /patrols/:id/note` |
+| Browse, search, join, pay | `GET /api/bot/catalog`, `/catalog/:id`, `POST /missions/:id/enroll`, `/missions/:id/checkout`, `/payments/:id/txid` |
+| Store | `GET /api/bot/store`, `POST /store/purchase` |
+| Live classes, calendar, leaderboard, Medals, announcements | `GET /api/bot/live-classes`, `/calendar`, `/leaderboard`, `/medals`, `/announcements` |
 | Notifications list and **feed** | `GET /api/bot/notifications`, `GET /api/bot/notifications/feed` |
 | Payments (own, pending queue, approve, reject) | `/api/bot/payments*` |
-| Mentor | `/api/bot/teacher/courses`, `/exams`, `/exams/live`, `/exams/:id/grading-count`, `/courses/:id/analytics` |
+| Mentor | `/api/bot/teacher/*`, `POST /api/bot/mentor/announcements`, `POST /api/bot/mentor/access` |
 | Admin | `/api/bot/admin/statistics`, `/api/bot/admin/users` |
+
+Every write route calls the same service the website's Server Action calls (`services/checkout.ts`, `services/enrollment.ts`,
+`services/mission-announcements.ts`, `lib/gamification/coins.ts`, `lib/enrollment/grant-access.ts`,
+`lib/certificate/manual-issue.ts`), so a payment started in Telegram goes through exactly the same checks as one started on the site.
 
 Rules: no business rule is re-implemented in the bot (level curve, grading letters aside, see below, payment
 verification, enrolment all stay in Proggaa); a missing capability is added to `/api/bot/*` rather than faked.
@@ -140,7 +147,7 @@ the Group Assistant. Anything deeper (disqualifying a student, editing users) st
 
 ## 11. Testing
 
-`npm test` (92 tests): unit tests for mappers, validation, time, deep links, formatters, rate limiting; the real
+`npm test` (125 tests): unit tests for mappers, validation, time, deep links, formatters, rate limiting; the real
 `createBot()` pipeline driven with hand-built Telegram updates for linking, role authorization, group refusal, payment
 confirmation, tampered callbacks, flood control and failure messages; the relay with a fake feed and sender. Network is
 never touched. Not covered automatically: a real Telegram chat, and the website's database (those are checked by

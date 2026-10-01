@@ -31,19 +31,25 @@ export const HELP_TEXT = (role: "STUDENT" | "TEACHER" | "ADMIN" | "NONE") => {
   if (role !== "NONE") {
     lines.push(
       "",
-      "*Your Proggaa*",
+      "*Study*",
       "/dashboard — level, XP, Proggy Coins and what is next",
-      "/missions — your Missions and progress",
-      "/exams — your Encounters",
-      "/results — your results",
+      "/missions — your Missions: open one to see its Operations and Patrols",
+      "/exams  /results — your Encounters and results",
       "/live — live and upcoming live classes",
-      "/wallet — your Proggy Coins",
-      "/achievements — what you unlocked",
-      "/progress — your overall progress",
-      "/studyplan — what to do next",
-      "/notifications — your latest notifications",
-      "/settings — choose which notifications reach Telegram",
-      "/support — get help"
+      "/calendar — your upcoming classes, events and deadlines",
+      "",
+      "*Join and buy*",
+      "/browse — find Missions, join free ones or pay for the rest",
+      "/search — search Missions by name",
+      "/payments — your payments; send a Transaction ID",
+      "",
+      "*Rewards*",
+      "/wallet — Proggy Coins",
+      "/store — spend Proggy Coins",
+      "/leaderboard  /medals  /achievements  /progress  /studyplan",
+      "",
+      "*Updates*",
+      "/notifications  /announcements  /settings  /support"
     );
   }
   if (role === "TEACHER" || role === "ADMIN") lines.push("", "*Mentor*", "/teacher — your Missions, Encounters and grading");

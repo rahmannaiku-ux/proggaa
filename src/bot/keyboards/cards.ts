@@ -6,7 +6,9 @@ import { ICON } from "../messages/brand";
 /** Buttons that open the matching page on the Proggaa website. */
 
 export function missionCardKeyboard(course: Course, deepLinks: DeepLinkService) {
-  return Markup.inlineKeyboard([[Markup.button.url(`${ICON.mission} Open Mission`, deepLinks.mission(course.id))]]);
+  return Markup.inlineKeyboard([
+    [Markup.button.callback(`${ICON.mission} Open here`, `m:${course.id}`), Markup.button.url("🌐 On Proggaa", deepLinks.mission(course.id))],
+  ]);
 }
 
 export function mentorMissionKeyboard(course: Course, deepLinks: DeepLinkService) {

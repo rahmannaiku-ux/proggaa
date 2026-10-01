@@ -94,6 +94,10 @@ export function formatPaymentCard(payment: Payment, options: { showStudent?: boo
   const lines = [`${ICON.payment} *${esc(payment.courseName || "Payment")}*`];
   if (options.showStudent && payment.studentName) lines.push(`${TERMS.student}: ${esc(payment.studentName)}`);
   lines.push(`Amount: ${formatTaka(payment.amount)}`);
+  if (payment.reference) lines.push(`Reference: \`${payment.reference.replace(/`/g, "")}\``);
+  if (payment.status === "PENDING" && !payment.transactionId && payment.receivingNumber) {
+    lines.push(`Send to: \`${payment.receivingNumber.replace(/`/g, "")}\``);
+  }
   if (payment.transactionId) lines.push(`Transaction ID: \`${payment.transactionId.replace(/`/g, "")}\``);
   lines.push(`Status: ${status}`, `Created: ${formatBstDateTime(payment.createdAt)}`);
   return lines.join("\n");

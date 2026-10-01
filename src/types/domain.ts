@@ -78,6 +78,11 @@ export interface Payment {
   amount: number;
   currency: string; // e.g. "BDT"
   transactionId: string;
+  /** The reference to quote when paying (for example PRG-8F42K7). */
+  reference?: string;
+  /** The number to send the money to, as set up by the admin. */
+  receivingNumber?: string;
+  provider?: string;
   status: PaymentStatus;
   createdAt: string; // ISO instant
 }
@@ -104,6 +109,174 @@ export interface LiveClass {
   endsAt: string; // ISO instant
   /** Website path of the Patrol, for the deep link. */
   path: string;
+}
+
+// ---------------------------------------------------------------------------
+// Learning: Missions, Operations, Patrols
+// ---------------------------------------------------------------------------
+
+export interface MissionOutline {
+  id: string;
+  title: string;
+  subtitle?: string;
+  isFree: boolean;
+  enrolled: boolean;
+  progressPercent: number;
+  operations: { id: string; title: string; patrolCount: number; completedCount: number }[];
+  /** The Patrol to continue with, when enrolled and not finished. */
+  resume?: { patrolId: string; title: string };
+}
+
+export interface PatrolListItem {
+  id: string;
+  title: string;
+  durationSeconds: number;
+  isPreview: boolean;
+  isLive: boolean;
+  completed: boolean;
+  locked: boolean;
+}
+
+export interface OperationOutline {
+  id: string;
+  title: string;
+  missionId: string;
+  missionTitle: string;
+  chapters: { id: string; title: string; classTypes: { id: string; title: string; patrols: PatrolListItem[] }[] }[];
+}
+
+export interface PatrolResource {
+  id: string;
+  title: string;
+  type: string;
+  downloadable: boolean;
+}
+
+export interface PatrolDetail {
+  id: string;
+  title: string;
+  description?: string;
+  durationSeconds: number;
+  isLive: boolean;
+  scheduledStart?: string;
+  missionId: string;
+  missionTitle: string;
+  operationId: string;
+  operationTitle: string;
+  completed: boolean;
+  watchedSeconds: number;
+  resources: PatrolResource[];
+  notes: { id: string; content: string; createdAt: string }[];
+  previous?: { id: string; title: string };
+  next?: { id: string; title: string };
+  /** Website path of the Patrol (where the video is watched). */
+  path: string;
+}
+
+// ---------------------------------------------------------------------------
+// Catalog, checkout and the store
+// ---------------------------------------------------------------------------
+
+export interface CatalogMission {
+  id: string;
+  title: string;
+  subtitle?: string;
+  level: string;
+  isFree: boolean;
+  /** Taka, before any discount. */
+  price: number;
+  /** Taka the hero would pay today. */
+  finalPrice: number;
+  durationMinutes: number;
+  mentorName: string;
+  enrolled: boolean;
+}
+
+export interface CatalogMissionDetail extends CatalogMission {
+  description: string;
+  openPayment?: { id: string; status: string };
+}
+
+export interface CatalogPage {
+  page: number;
+  pageSize: number;
+  total: number;
+  missions: CatalogMission[];
+}
+
+/** What a hero needs to pay for a Mission. */
+export interface CheckoutInstructions {
+  paymentId: string;
+  /** Taka to send (0 when a coupon covered everything). */
+  amount: number;
+  currency: string;
+  reference: string;
+  receivingNumber?: string;
+  provider?: string;
+  couponCode?: string;
+  missionTitle: string;
+  /** True when nothing is left to pay and the payment is already awaiting verification. */
+  fullyDiscounted: boolean;
+}
+
+export interface StoreItem {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  priceCoins: number;
+  owned: boolean;
+}
+
+export interface StoreView {
+  coinBalance: number;
+  items: StoreItem[];
+}
+
+// ---------------------------------------------------------------------------
+// Social: calendar, leaderboard, medals, announcements
+// ---------------------------------------------------------------------------
+
+export interface CalendarEntry {
+  id: string;
+  kind: "event" | "live_class" | "assignment_due";
+  title: string;
+  description?: string;
+  startsAt: string;
+  endsAt?: string;
+  path?: string;
+  missionTitle?: string;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  xp: number;
+  level: number;
+  streakDays: number;
+}
+
+export interface LeaderboardView {
+  top: LeaderboardEntry[];
+  me?: LeaderboardEntry;
+  /** "NEVER" for an all-time board, otherwise the reset schedule (this period's XP). */
+  schedule: string;
+}
+
+export interface Medal {
+  id: string;
+  missionTitle: string;
+  issuedAt?: string;
+  verifyPath: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  missionTitle?: string;
+  createdAt: string;
 }
 
 // ---------------------------------------------------------------------------

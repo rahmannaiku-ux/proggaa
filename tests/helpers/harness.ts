@@ -52,17 +52,21 @@ export function callbackUpdate(userId: number, chatId: number, data: string, cha
 export function buildTestBot(services = buildFakeContainer()) {
   const bot = createBot(services, "test-token-for-vitest");
   const sent: { chatId: unknown; text: string; extra: any }[] = [];
-  const edits: { text: string }[] = [];
+  const edits: { text: string; extra: any }[] = [];
+  /** Every message sent or edited, in the order the bot did it. */
+  const log: { kind: "send" | "edit"; text: string; extra: any }[] = [];
   const answers: { text?: string }[] = [];
 
   // Every outgoing request funnels through Telegram.prototype.callApi.
   vi.spyOn(Telegram.prototype, "callApi").mockImplementation((async (method: string, payload: any) => {
     if (method === "sendMessage") {
       sent.push({ chatId: payload?.chat_id, text: payload?.text, extra: payload });
+      log.push({ kind: "send", text: payload?.text, extra: payload });
       return { message_id: sent.length, date: 0, chat: { id: payload?.chat_id }, text: payload?.text };
     }
     if (method === "editMessageText") {
-      edits.push({ text: payload?.text });
+      edits.push({ text: payload?.text, extra: payload });
+      log.push({ kind: "edit", text: payload?.text, extra: payload });
       return { message_id: 1, date: 0, chat: { id: payload?.chat_id }, text: payload?.text };
     }
     if (method === "answerCallbackQuery") {
@@ -78,7 +82,9 @@ export function buildTestBot(services = buildFakeContainer()) {
   /** Everything sent back to the person, newest last. */
   const texts = () => sent.map((m) => m.text);
   const lastText = () => sent[sent.length - 1]?.text ?? "";
-  return { bot, services, sent, edits, answers, texts, lastText };
+  /** What the person saw last, whether it was a new message or an edit. */
+  const lastShown = () => log[log.length - 1]?.text ?? "";
+  return { bot, services, sent, edits, log, answers, texts, lastText, lastShown };
 }
 
 /** Links a fresh Telegram user to the given fake account through the real /link flow. */

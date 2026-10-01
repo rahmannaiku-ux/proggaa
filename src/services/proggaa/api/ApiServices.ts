@@ -1,50 +1,83 @@
 import type {
   Achievement,
   AdminStatistics,
+  Announcement,
+  CalendarEntry,
+  CatalogMissionDetail,
+  CatalogPage,
+  CheckoutInstructions,
   Course,
   ExamResult,
   ExamSummary,
   FeedNotification,
+  LeaderboardView,
   LiveClass,
   LiveExamStatus,
+  Medal,
+  MissionOutline,
+  OperationOutline,
+  PatrolDetail,
   Payment,
   ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
+  StoreView,
   TeacherAnalytics,
 } from "../../../types/domain";
 import type {
   FeedCursor,
   ProggaaAchievementService,
   ProggaaAdminService,
+  ProggaaCatalogService,
+  ProggaaCommunityService,
   ProggaaCourseService,
   ProggaaExamService,
+  ProggaaLearningService,
   ProggaaLiveClassService,
+  ProggaaMentorToolsService,
   ProggaaNotificationFeed,
   ProggaaNotificationService,
   ProggaaPaymentService,
   ProggaaResultService,
+  ProggaaStoreService,
   ProggaaUserService,
 } from "../interfaces";
 import { NotFoundError } from "../errors";
 import { ApiClient } from "./ApiClient";
 import {
   mapAchievement,
+  mapAnnouncement,
+  mapCalendarItem,
+  mapCatalogDetail,
+  mapCatalogPage,
+  mapCheckout,
   mapCourse,
   mapExam,
   mapFeedItem,
+  mapLeaderboard,
   mapLiveClass,
+  mapMedal,
+  mapMissionOutline,
   mapNotification,
+  mapOperationOutline,
+  mapPatrol,
   mapPayment,
   mapResult,
   mapRole,
+  mapStore,
   mapUser,
   type WebAchievement,
+  type WebCalendarItem,
+  type WebCatalogMission,
+  type WebCheckout,
   type WebCourse,
   type WebExam,
   type WebFeedItem,
   type WebLiveClass,
+  type WebMission,
   type WebNotification,
+  type WebOperation,
+  type WebPatrol,
   type WebPayment,
   type WebResult,
   type WebUser,
@@ -261,5 +294,128 @@ export class ApiProggaaAdminService implements ProggaaAdminService {
     });
     const users = (rows ?? []).map(mapUser);
     return role ? users.filter((u) => u.role === role) : users;
+  }
+}
+
+export class ApiProggaaLearningService implements ProggaaLearningService {
+  constructor(private readonly api: ApiClient) {}
+
+  async getMission(proggaaUserId: string, missionId: string): Promise<MissionOutline | null> {
+    const m = await this.api.get<WebMission>(`/api/bot/missions/${enc(missionId)}`, { userId: proggaaUserId });
+    return m ? mapMissionOutline(m) : null;
+  }
+
+  async getOperation(proggaaUserId: string, operationId: string): Promise<OperationOutline | null> {
+    const o = await this.api.get<WebOperation>(`/api/bot/operations/${enc(operationId)}`, { userId: proggaaUserId });
+    return o ? mapOperationOutline(o) : null;
+  }
+
+  async getPatrol(proggaaUserId: string, patrolId: string): Promise<PatrolDetail | null> {
+    const p = await this.api.get<WebPatrol>(`/api/bot/patrols/${enc(patrolId)}`, { userId: proggaaUserId });
+    return p ? mapPatrol(p) : null;
+  }
+
+  async addNote(proggaaUserId: string, patrolId: string, text: string): Promise<void> {
+    await this.api.post(`/api/bot/patrols/${enc(patrolId)}/note`, { userId: proggaaUserId, text });
+  }
+}
+
+export class ApiProggaaCatalogService implements ProggaaCatalogService {
+  constructor(private readonly api: ApiClient) {}
+
+  async browse(proggaaUserId: string, options: { query?: string; page?: number }): Promise<CatalogPage> {
+    const r = await this.api.get<{ page: number; pageSize: number; total: number; missions: WebCatalogMission[] }>("/api/bot/catalog", {
+      userId: proggaaUserId,
+      q: options.query,
+      page: options.page,
+    });
+    return mapCatalogPage(r ?? { page: 1, pageSize: 6, total: 0, missions: [] });
+  }
+
+  async getMission(proggaaUserId: string, missionId: string): Promise<CatalogMissionDetail | null> {
+    const m = await this.api.get<WebCatalogMission>(`/api/bot/catalog/${enc(missionId)}`, { userId: proggaaUserId });
+    return m ? mapCatalogDetail(m) : null;
+  }
+
+  async enrollFree(proggaaUserId: string, missionId: string): Promise<void> {
+    await this.api.post(`/api/bot/missions/${enc(missionId)}/enroll`, { userId: proggaaUserId });
+  }
+
+  async checkout(proggaaUserId: string, missionId: string, couponCode?: string): Promise<CheckoutInstructions> {
+    const p = await this.api.post<WebCheckout>(`/api/bot/missions/${enc(missionId)}/checkout`, {
+      userId: proggaaUserId,
+      ...(couponCode ? { couponCode } : {}),
+    });
+    return mapCheckout(p);
+  }
+
+  async submitTransactionId(proggaaUserId: string, paymentId: string, transactionId: string): Promise<void> {
+    await this.api.post(`/api/bot/payments/${enc(paymentId)}/txid`, { userId: proggaaUserId, transactionId });
+  }
+}
+
+export class ApiProggaaStoreService implements ProggaaStoreService {
+  constructor(private readonly api: ApiClient) {}
+
+  async getStore(proggaaUserId: string): Promise<StoreView> {
+    const r = await this.api.get<Parameters<typeof mapStore>[0]>("/api/bot/store", { userId: proggaaUserId });
+    return mapStore(r ?? { coinBalance: 0, items: [] });
+  }
+
+  async purchase(proggaaUserId: string, itemId: string): Promise<{ itemTitle: string }> {
+    const r = await this.api.post<{ itemTitle: string }>("/api/bot/store/purchase", { userId: proggaaUserId, itemId });
+    return { itemTitle: r.itemTitle };
+  }
+}
+
+export class ApiProggaaCommunityService implements ProggaaCommunityService {
+  constructor(private readonly api: ApiClient) {}
+
+  async getCalendar(proggaaUserId: string): Promise<CalendarEntry[]> {
+    const rows = await this.api.get<WebCalendarItem[]>("/api/bot/calendar", { userId: proggaaUserId });
+    return (rows ?? []).map(mapCalendarItem);
+  }
+
+  async getLeaderboard(proggaaUserId: string): Promise<LeaderboardView> {
+    const r = await this.api.get<Parameters<typeof mapLeaderboard>[0]>("/api/bot/leaderboard", { userId: proggaaUserId });
+    return mapLeaderboard(r ?? { schedule: "NEVER", top: [], me: null });
+  }
+
+  async getMedals(proggaaUserId: string): Promise<Medal[]> {
+    const rows = await this.api.get<Parameters<typeof mapMedal>[0][]>("/api/bot/medals", { userId: proggaaUserId });
+    return (rows ?? []).map(mapMedal);
+  }
+
+  async getAnnouncements(proggaaUserId: string): Promise<Announcement[]> {
+    const rows = await this.api.get<Parameters<typeof mapAnnouncement>[0][]>("/api/bot/announcements", { userId: proggaaUserId });
+    return (rows ?? []).map(mapAnnouncement);
+  }
+}
+
+export class ApiProggaaMentorToolsService implements ProggaaMentorToolsService {
+  constructor(private readonly api: ApiClient) {}
+
+  async announce(mentorProggaaUserId: string, missionId: string, title: string, body: string): Promise<void> {
+    await this.api.post("/api/bot/mentor/announcements", { mentorId: mentorProggaaUserId, missionId, title, body });
+  }
+
+  async grantAccess(mentorProggaaUserId: string, missionId: string, identifier: string) {
+    const r = await this.api.post<{ studentLabel: string; alreadyEnrolled: boolean }>("/api/bot/mentor/access", {
+      mentorId: mentorProggaaUserId,
+      action: "grant",
+      missionId,
+      identifier,
+    });
+    return { heroLabel: r.studentLabel, alreadyEnrolled: r.alreadyEnrolled };
+  }
+
+  async issueMedal(mentorProggaaUserId: string, missionId: string, identifier: string) {
+    const r = await this.api.post<{ studentLabel: string; alreadyIssued: boolean }>("/api/bot/mentor/access", {
+      mentorId: mentorProggaaUserId,
+      action: "medal",
+      missionId,
+      identifier,
+    });
+    return { heroLabel: r.studentLabel, alreadyIssued: r.alreadyIssued };
   }
 }

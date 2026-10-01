@@ -28,6 +28,13 @@ export function isPlausibleCallbackData(data: string): boolean {
 
 export const TEXT_LIMITS = {
   linkCode: 64,
+  note: 1000,
+  searchQuery: 80,
+  couponCode: 40,
+  transactionId: 20,
+  heroIdentifier: 120,
+  announcementTitle: 120,
+  announcementBody: 1000,
   rejectReason: 500,
   groupAnnouncement: 1000,
 } as const;
