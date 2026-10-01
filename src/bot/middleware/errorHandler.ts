@@ -2,15 +2,14 @@ import type { MiddlewareFn } from "telegraf";
 import type { ProggaaBotContext } from "../../types/session";
 import { ProggaaServiceError } from "../../services/proggaa/errors";
 import { logger } from "../../utils/logger";
+import { GENERIC_ERROR } from "../messages/copy";
 
-const FRIENDLY_FALLBACK =
-  "😕 Something went wrong on our end. Please try again in a moment, or use /support if it keeps happening.";
+const FRIENDLY_FALLBACK = GENERIC_ERROR;
 
 /**
  * Wraps every update so a thrown error becomes a friendly Telegram message
  * instead of an unhandled crash or a raw stack trace shown to the user.
- * Known `ProggaaServiceError` subclasses (from mock or future real
- * services) are shown with their own message; everything else falls back
+ * Known `ProggaaServiceError` subclasses (from the Api* services) are shown with their own message; everything else falls back
  * to a generic apology while the real error is logged.
  */
 export const errorHandlerMiddleware: MiddlewareFn<ProggaaBotContext> = async (ctx, next) => {

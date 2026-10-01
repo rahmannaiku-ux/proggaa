@@ -14,10 +14,10 @@ interface FaqEntry {
 // one of these common questions, and even then only once per match. This is
 // deliberately small; false positives are worse than an unanswered question.
 const FAQ_ENTRIES: FaqEntry[] = [
-  { pattern: /\b(pay|payment|bkash|txid)\b/i, answer: "💳 For payments: open a private chat with me and use /payments to see instructions and check your status." },
-  { pattern: /\b(access|can'?t (open|see|watch)|course access)\b/i, answer: "📚 For course access issues: DM me and use /courses, or open a Support ticket via /support." },
-  { pattern: /\bwhen.*(exam|test)\b|\bexam.*(date|time|when)\b/i, answer: "📝 For exam schedules: DM me and use /exams to see your upcoming exams." },
-  { pattern: /\b(contact support|talk to (a )?human|need help|raise a ticket)\b/i, answer: "🆘 Open a private chat with me and use /support — that keeps your account details out of the group." },
+  { pattern: /\b(pay|payment|bkash|txid)\b/i, answer: "💳 For payments: message me privately and use /payments to check your status." },
+  { pattern: /\b(access|can'?t (open|see|watch)|course access)\b/i, answer: "📚 For Mission access issues: message me privately and use /missions, or send /support for the Support page." },
+  { pattern: /\bwhen.*(exam|test)\b|\bexam.*(date|time|when)\b/i, answer: "📝 For Encounter schedules: message me privately and use /exams to see yours." },
+  { pattern: /\b(contact support|talk to (a )?human|need help|raise a ticket)\b/i, answer: "🆘 Message me privately and use /support. That keeps your account details out of the group." },
 ];
 
 function isDirectedAtBot(ctx: ProggaaBotContext, text: string): boolean {

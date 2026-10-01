@@ -4,20 +4,21 @@ import type {
   ExamResult,
   ExamStatus,
   ExamSummary,
+  FeedNotification,
+  LiveClass,
   NotificationCategory,
-  NotificationEvent,
-  NotificationEventType,
   Payment,
   PaymentStatus,
+  ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
 } from "../../../types/domain";
 
 /**
  * Pure translation from the website's /api/bot/* JSON to the bot's own domain
- * types. Kept free of I/O so it can be unit tested with plain objects.
- * The website speaks in its own words (Mission, poisha, SUPER_ADMIN); the bot
- * speaks in Course, taka and three roles.
+ * types. No I/O, so it can be unit tested with plain objects. The website
+ * speaks in its own words (poisha, SUPER_ADMIN, createdAt); the bot speaks in
+ * taka and three roles.
  */
 
 export function mapRole(role: string): ProggaaRole {
@@ -25,6 +26,8 @@ export function mapRole(role: string): ProggaaRole {
   if (role === "TEACHER") return "TEACHER";
   return "STUDENT";
 }
+
+// --- people ------------------------------------------------------------------
 
 export interface WebUser {
   id: string;
@@ -34,7 +37,11 @@ export interface WebUser {
   role: string;
   avatarUrl?: string | null;
   xp?: number;
+  level?: number;
+  xpIntoLevel?: number;
+  xpForNextLevel?: number;
   streakDays?: number;
+  coinBalance?: number;
 }
 
 export function mapUser(u: WebUser): ProggaaUser {
@@ -44,10 +51,16 @@ export function mapUser(u: WebUser): ProggaaUser {
     email: u.email ?? undefined,
     role: mapRole(u.role),
     xp: u.xp ?? 0,
+    level: u.level ?? 1,
+    xpIntoLevel: u.xpIntoLevel ?? 0,
+    xpForNextLevel: u.xpForNextLevel ?? 0,
     streakDays: u.streakDays ?? 0,
+    coinBalance: u.coinBalance ?? 0,
     avatarUrl: u.avatarUrl ?? undefined,
   };
 }
+
+// --- missions ----------------------------------------------------------------
 
 export interface WebCourse {
   id: string;
@@ -56,12 +69,10 @@ export interface WebCourse {
 }
 
 export function mapCourse(c: WebCourse): Course {
-  return {
-    id: c.id,
-    name: c.title,
-    progressPercent: Math.round(c.progressPct ?? 0),
-  };
+  return { id: c.id, name: c.title, progressPercent: Math.round(c.progressPct ?? 0) };
 }
+
+// --- encounters (exams) -------------------------------------------------------
 
 export interface WebExam {
   id: string;
@@ -95,11 +106,11 @@ export function mapExamStatus(e: WebExam, now: Date = new Date()): ExamStatus {
   }
   if (e.liveStatus === "ACCESS_OPEN") return "LIVE";
   if (e.liveStatus === "SCHEDULED") {
-    return start !== null && start - t <= 60 * MINUTE && start > t ? "STARTING_SOON" : "SCHEDULED";
+    return start !== null && start > t && start - t <= 60 * MINUTE ? "STARTING_SOON" : "SCHEDULED";
   }
 
   // Not a live exam (a quiz, or an exam without a monitoring window): it is
-  // available between its access times, whenever those are set.
+  // open between its access times, whenever those are set.
   if (closes !== null && t > closes) return "COMPLETED";
   if (start !== null && t < start) return start - t <= 60 * MINUTE ? "STARTING_SOON" : "SCHEDULED";
   return "LIVE";
@@ -153,6 +164,8 @@ export function mapResult(r: WebResult, userId: string): ExamResult {
   };
 }
 
+// --- payments ----------------------------------------------------------------
+
 export interface WebPayment {
   id: string;
   userId?: string;
@@ -171,11 +184,11 @@ export function mapPaymentStatus(status: string): PaymentStatus {
   return "PENDING"; // PENDING and AWAITING_VERIFICATION
 }
 
-export function mapPayment(p: WebPayment, studentName?: string): Payment {
+export function mapPayment(p: WebPayment): Payment {
   return {
     id: p.id,
     studentId: p.userId ?? p.user?.id ?? "",
-    studentName: studentName ?? (p.user ? `${p.user.firstName} ${p.user.lastName}`.trim() : ""),
+    studentName: p.user ? `${p.user.firstName} ${p.user.lastName}`.trim() : "",
     courseId: p.course?.id ?? "",
     courseName: p.course?.title ?? "",
     amount: p.amountCents / 100, // the website stores poisha, the bot shows taka
@@ -185,6 +198,8 @@ export function mapPayment(p: WebPayment, studentName?: string): Payment {
     createdAt: new Date(p.createdAt).toISOString(),
   };
 }
+
+// --- achievements and live classes -------------------------------------------
 
 export interface WebAchievement {
   key: string;
@@ -205,36 +220,85 @@ export function mapAchievement(a: WebAchievement, userId: string): Achievement {
   };
 }
 
+export interface WebLiveClass {
+  id: string;
+  title: string;
+  missionId: string;
+  missionTitle: string;
+  status: string;
+  scheduledStart: string;
+  scheduledEnd: string;
+  path: string;
+}
+
+export function mapLiveClass(l: WebLiveClass): LiveClass {
+  return {
+    id: l.id,
+    title: l.title,
+    missionId: l.missionId,
+    missionTitle: l.missionTitle,
+    status: l.status === "LIVE" ? "LIVE" : "UPCOMING",
+    startsAt: new Date(l.scheduledStart).toISOString(),
+    endsAt: new Date(l.scheduledEnd).toISOString(),
+    path: l.path,
+  };
+}
+
+// --- notifications -----------------------------------------------------------
+
+/** Proggaa's own notification types, each filed under one category a hero can mute. */
+const CATEGORY_BY_TYPE: Record<string, NotificationCategory> = {
+  ANNOUNCEMENT: "ANNOUNCEMENTS",
+  GRADE_POSTED: "RESULTS",
+  ENROLLMENT: "MISSIONS",
+  CERTIFICATE_ISSUED: "ACHIEVEMENTS",
+  EXAM_REMINDER: "EXAM_REMINDERS",
+  ASSIGNMENT_DUE: "CHALLENGES",
+  STREAK_RISK: "STREAK",
+  ACHIEVEMENT_UNLOCKED: "ACHIEVEMENTS",
+  SYSTEM: "SYSTEM",
+  PAYMENT_AWAITING_VERIFICATION: "PAYMENTS",
+  PAYMENT_VERIFIED: "PAYMENTS",
+  PAYMENT_REJECTED: "PAYMENTS",
+  LIVE_CLASS_REMINDER: "LIVE_CLASSES",
+};
+
+export function categoryForProggaaType(type: string): NotificationCategory {
+  return CATEGORY_BY_TYPE[type] ?? "SYSTEM";
+}
+
+/** Only a path on the Proggaa website is accepted as a link target. */
+export function safeLinkPath(linkUrl: string | null | undefined): string | undefined {
+  if (!linkUrl) return undefined;
+  if (!linkUrl.startsWith("/") || linkUrl.startsWith("//") || linkUrl.includes("\\")) return undefined;
+  return linkUrl;
+}
+
 export interface WebNotification {
   id: string;
   type: string;
   title: string;
   body: string;
+  linkUrl?: string | null;
   createdAt: string;
 }
 
-const NOTIFICATION_KINDS: Record<string, { type: NotificationEventType; category: NotificationCategory }> = {
-  GRADE_POSTED: { type: "RESULTS_PUBLISHED", category: "RESULTS" },
-  ENROLLMENT: { type: "ENROLLMENT_COMPLETED", category: "COURSE_UPDATES" },
-  CERTIFICATE_ISSUED: { type: "ACHIEVEMENT_UNLOCKED", category: "ACHIEVEMENTS" },
-  EXAM_REMINDER: { type: "EXAM_REMINDER_1_DAY", category: "EXAM_REMINDERS" },
-  ASSIGNMENT_DUE: { type: "SYSTEM_NOTICE", category: "ASSIGNMENTS" },
-  ACHIEVEMENT_UNLOCKED: { type: "ACHIEVEMENT_UNLOCKED", category: "ACHIEVEMENTS" },
-  PAYMENT_AWAITING_VERIFICATION: { type: "PAYMENT_NEW", category: "PAYMENTS" },
-  PAYMENT_VERIFIED: { type: "PAYMENT_APPROVED", category: "PAYMENTS" },
-  PAYMENT_REJECTED: { type: "PAYMENT_REJECTED", category: "PAYMENTS" },
-  LIVE_CLASS_REMINDER: { type: "EXAM_REMINDER_1_HOUR", category: "COURSE_UPDATES" },
-  ANNOUNCEMENT: { type: "NEW_ANNOUNCEMENT", category: "COURSE_UPDATES" },
-};
-
-export function mapNotification(n: WebNotification, userId: string): NotificationEvent {
-  const kind = NOTIFICATION_KINDS[n.type] ?? { type: "SYSTEM_NOTICE" as const, category: "SYSTEM_ALERTS" as const };
+export function mapNotification(n: WebNotification): ProggaaNotification {
   return {
-    type: kind.type,
-    userId,
-    category: kind.category,
+    id: n.id,
+    category: categoryForProggaaType(n.type),
     title: n.title,
     body: n.body,
-    data: { notificationId: n.id, createdAt: n.createdAt },
+    linkPath: safeLinkPath(n.linkUrl),
+    createdAt: new Date(n.createdAt).toISOString(),
   };
+}
+
+export interface WebFeedItem extends WebNotification {
+  userId: string;
+  telegramId: string;
+}
+
+export function mapFeedItem(n: WebFeedItem): FeedNotification {
+  return { ...mapNotification(n), proggaaUserId: n.userId, telegramId: n.telegramId };
 }

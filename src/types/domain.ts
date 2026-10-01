@@ -1,11 +1,14 @@
 /**
- * Core Proggaa domain types.
+ * Proggaa domain types, as the Telegram bot sees them.
  *
- * These types describe the LMS domain (users, courses, exams, payments, ...)
- * and are intentionally decoupled from Telegram. Nothing in this file should
- * import from `telegraf` or any bot-specific module. This is what makes it
- * safe to eventually swap Telegram for another channel, or to reuse these
- * types directly against a real Proggaa API client.
+ * Proggaa owns all of this data. The bot never stores a copy: it reads these
+ * shapes from the website's /api/bot/* routes and shows them. Nothing here
+ * imports from `telegraf`.
+ *
+ * Naming: the website and database use plain LMS words (Course, Lesson, Exam)
+ * while the product shown to people says Mission, Patrol and Encounter. The
+ * types keep the plain names, exactly like Proggaa's own code, and everything
+ * a person reads in Telegram uses the Proggaa words (see bot/messages/brand.ts).
  */
 
 export type ProggaaRole = "STUDENT" | "TEACHER" | "ADMIN";
@@ -16,24 +19,20 @@ export interface ProggaaUser {
   email?: string;
   role: ProggaaRole;
   xp: number;
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
   streakDays: number;
+  /** Proggy Coins balance. */
+  coinBalance: number;
   avatarUrl?: string;
 }
 
+/** A Mission the hero is enrolled in (or, for a mentor, one they teach). */
 export interface Course {
   id: string;
   name: string;
   progressPercent: number; // 0-100, for the requesting student
-  nextLessonTitle?: string;
-  upcomingExamId?: string;
-  upcomingExamTitle?: string;
-}
-
-export interface Enrollment {
-  id: string;
-  userId: string;
-  courseId: string;
-  enrolledAt: string; // ISO date
 }
 
 export type ExamStatus =
@@ -44,13 +43,14 @@ export type ExamStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+/** An Encounter (quiz or exam). */
 export interface ExamSummary {
   id: string;
   courseId: string;
   courseName: string;
   title: string;
   status: ExamStatus;
-  startsAt: string; // ISO date
+  startsAt: string; // ISO instant
   durationMinutes: number;
 }
 
@@ -63,7 +63,7 @@ export interface ExamResult {
   maxScore: number;
   percentage: number;
   grade: string;
-  publishedAt: string; // ISO date
+  publishedAt: string; // ISO instant
 }
 
 export type PaymentStatus = "PENDING" | "APPROVED" | "REJECTED";
@@ -74,11 +74,12 @@ export interface Payment {
   studentName: string;
   courseId: string;
   courseName: string;
+  /** Taka (the website stores poisha; the mapper divides by 100). */
   amount: number;
   currency: string; // e.g. "BDT"
   transactionId: string;
   status: PaymentStatus;
-  createdAt: string; // ISO date
+  createdAt: string; // ISO instant
 }
 
 export interface Achievement {
@@ -87,124 +88,70 @@ export interface Achievement {
   name: string;
   description: string;
   xpAwarded: number;
-  unlockedAt: string; // ISO date
+  unlockedAt: string; // ISO instant
 }
 
+export type LiveClassStatus = "UPCOMING" | "LIVE";
+
+/** A live class (a scheduled Patrol) in one of the hero's Missions. */
+export interface LiveClass {
+  id: string;
+  title: string;
+  missionId: string;
+  missionTitle: string;
+  status: LiveClassStatus;
+  startsAt: string; // ISO instant
+  endsAt: string; // ISO instant
+  /** Website path of the Patrol, for the deep link. */
+  path: string;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+/**
+ * The kinds of notification a hero can switch off in Telegram. Each of
+ * Proggaa's own notification types belongs to exactly one of these
+ * (see categoryForProggaaType in services/proggaa/api/mappers.ts).
+ */
 export type NotificationCategory =
   | "EXAM_REMINDERS"
   | "RESULTS"
-  | "COURSE_UPDATES"
-  | "ASSIGNMENTS"
+  | "LIVE_CLASSES"
+  | "ANNOUNCEMENTS"
+  | "MISSIONS"
+  | "CHALLENGES"
   | "ACHIEVEMENTS"
+  | "STREAK"
   | "PAYMENTS"
-  | "SUPPORT_UPDATES"
-  | "TEACHER_ALERTS"
-  | "SYSTEM_ALERTS";
+  | "SYSTEM";
 
 export interface NotificationPreferences {
   userId: string;
   categories: Record<NotificationCategory, boolean>;
 }
 
-export type NotificationEventType =
-  | "EXAM_SCHEDULED"
-  | "EXAM_REMINDER_1_DAY"
-  | "EXAM_REMINDER_1_HOUR"
-  | "EXAM_REMINDER_10_MIN"
-  | "EXAM_STARTED"
-  | "EXAM_ENDING_SOON"
-  | "EXAM_SUBMITTED"
-  | "RESULTS_PUBLISHED"
-  | "MANUAL_GRADING_COMPLETED"
-  | "EXAM_CANCELLED"
-  | "EXAM_RESCHEDULED"
-  | "RETAKE_AVAILABLE"
-  | "TEACHER_STUDENT_SUBMITTED"
-  | "TEACHER_MANUAL_GRADING_REQUIRED"
-  | "TEACHER_SUSPICIOUS_ACTIVITY"
-  | "TEACHER_STUDENT_DISQUALIFIED"
-  | "TEACHER_EXAM_COMPLETED"
-  | "TEACHER_LIVE_EXAM_STARTED"
-  | "TEACHER_LIVE_EXAM_ENDED"
-  | "ACHIEVEMENT_UNLOCKED"
-  | "PAYMENT_NEW"
-  | "PAYMENT_APPROVED"
-  | "PAYMENT_REJECTED"
-  | "ENROLLMENT_COMPLETED"
-  | "SUPPORT_TICKET_REPLIED"
-  | "NEW_ANNOUNCEMENT"
-  | "SYSTEM_NOTICE";
-
-export interface NotificationEvent {
-  type: NotificationEventType;
-  userId: string; // recipient Proggaa user id
+/** One of the website's own notifications, as listed in /notifications. */
+export interface ProggaaNotification {
+  id: string;
   category: NotificationCategory;
   title: string;
   body: string;
-  data?: Record<string, string>; // ids used to build deep links, etc.
+  /** Website path the notification points to, if any. */
+  linkPath?: string;
+  createdAt: string; // ISO instant
 }
 
-export type SupportCategory =
-  | "PAYMENT_PROBLEM"
-  | "COURSE_ACCESS"
-  | "VIDEO_PROBLEM"
-  | "EXAM_PROBLEM"
-  | "RESULT_PROBLEM"
-  | "ACCOUNT_PROBLEM"
-  | "CERTIFICATE_PROBLEM"
-  | "REFUND_PROBLEM"
-  | "BUG_REPORT"
-  | "OTHER";
-
-export type SupportTicketStatus =
-  | "WAITING" // waiting for support to pick it up
-  | "IN_PROGRESS" // a teacher/admin is actively working it
-  | "RESOLVED"
-  | "ESCALATED"
-  | "CLOSED";
-
-export type SupportTicketPriority = "NORMAL" | "HIGH";
-
-/**
- * Diagnostic context auto-attached to a ticket when it's available, so
- * staff don't have to ask the student for basic info. Every field is
- * optional — only attach what's actually known for that category.
- * Never rendered in group chats; this is support-thread-only.
- */
-export interface SupportTicketContext {
-  courseId?: string;
-  courseName?: string;
-  lessonId?: string;
-  examId?: string;
-  examTitle?: string;
-  attemptId?: string;
-  paymentId?: string;
-  transactionId?: string;
-  errorInfo?: string;
+/** A notification plus who to deliver it to, from the website's feed. */
+export interface FeedNotification extends ProggaaNotification {
+  proggaaUserId: string;
+  telegramId: string;
 }
 
-export interface SupportTicketMessage {
-  id: string;
-  author: "STUDENT" | "STAFF";
-  authorName: string;
-  body: string;
-  createdAt: string; // ISO date
-}
-
-export interface SupportTicket {
-  id: string; // internal id, e.g. "ticket_42"
-  ticketNumber: string; // human-facing id, e.g. "PRG-000042"
-  userId: string;
-  category: SupportCategory;
-  priority: SupportTicketPriority;
-  status: SupportTicketStatus;
-  context?: SupportTicketContext;
-  messages: SupportTicketMessage[]; // messages[0] is always the opening message
-  assignedToUserId?: string;
-  assignedToName?: string;
-  createdAt: string; // ISO date
-  updatedAt: string; // ISO date
-}
+// ---------------------------------------------------------------------------
+// Mentor and admin views
+// ---------------------------------------------------------------------------
 
 export interface LiveExamStatus {
   examId: string;
@@ -221,48 +168,9 @@ export interface AdminStatistics {
   courseCount: number;
   examCount: number;
   liveExamCount: number;
+  /** Taka collected today (Bangladesh day). */
   todaysPaymentsTotal: number;
   currency: string;
-}
-
-export type QuestionType = "MCQ" | "NUMERICAL" | "SHORT_ANSWER";
-export type QuestionDifficulty = "EASY" | "MEDIUM" | "HARD";
-
-export interface Question {
-  id: string;
-  type: QuestionType;
-  difficulty: QuestionDifficulty;
-  topic: string;
-  prompt: string;
-  choices?: string[]; // for MCQ
-  correctAnswer?: string;
-}
-
-export interface AIGenerationRequest {
-  topic: string;
-  questionType: QuestionType;
-  difficulty: QuestionDifficulty;
-  count: number;
-  sourceText?: string;
-}
-
-export interface AIGenerationResult {
-  requestId: string;
-  questions: Question[];
-}
-
-// Student-facing AI tutoring (distinct from teacher/admin question
-// generation above) — explaining concepts, summaries, hints, flashcards,
-// revision plans. Never used to solve/reveal active exam questions; the
-// bot enforces that lockout before calling this, not the AI itself.
-export type TutorMode = "EXPLAIN_TOPIC" | "SUMMARIZE_LESSON" | "HINT" | "FLASHCARDS" | "REVISION_SESSION";
-
-export interface TutorRequest {
-  mode: TutorMode;
-  topic: string;
-  /** Student's enrolled course names, if available — used only to ground
-   * lesson summaries against the right course, never sent as full records. */
-  enrolledCourses?: string[];
 }
 
 export interface TeacherAnalytics {
@@ -272,15 +180,8 @@ export interface TeacherAnalytics {
   completionRate: number; // 0-100, % of enrolled students who finish a course
 }
 
-export type AlertSeverity = "info" | "warning" | "critical";
-
-export interface SystemAlert {
-  severity: AlertSeverity;
-  message: string;
-}
-
 // ---------------------------------------------------------------------------
-// Group Assistant
+// Group Assistant (bot-owned: it manages Telegram groups, not Proggaa data)
 // ---------------------------------------------------------------------------
 
 export interface GroupSettings {
@@ -300,6 +201,5 @@ export interface ModerationEvent {
   telegramId: string;
   reason: string;
   action: ModerationAction;
-  createdAt: string; // ISO date
+  createdAt: string; // ISO instant
 }
-

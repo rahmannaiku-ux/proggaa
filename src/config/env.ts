@@ -1,18 +1,11 @@
 import "dotenv/config";
 import { z } from "zod";
 
-const providerEnum = z.enum(["mock", "api"]);
-// Blank `.env` lines (as in .env.example) mean "not set", same as the helpers below.
-const blankToUndefinedEarly = (v: unknown) => (v === "" ? undefined : v);
-const optionalProvider = () => z.preprocess(blankToUndefinedEarly, providerEnum.optional());
-
-// A .env file with a deliberately-blank placeholder line (e.g.
-// `WEBHOOK_URL=`, as .env.example has for fields you only need in
-// webhook mode) makes dotenv set that var to an empty string, not leave
-// it unset. Zod's `.optional()` only treats `undefined` as "not
-// provided" — an empty string still gets validated and fails `.url()`
-// or `.min()`. These helpers normalize "" to undefined first so blank
-// placeholder lines behave the same as omitting the line entirely.
+// A .env file with a deliberately blank line (e.g. `WEBHOOK_URL=`, as
+// .env.example has for settings you only need in webhook mode) makes dotenv set
+// that variable to an empty string rather than leave it unset. Zod's
+// `.optional()` only treats `undefined` as "not provided", so blank values are
+// turned into undefined first.
 const blankToUndefined = (v: unknown) => (v === "" ? undefined : v);
 const optionalString = () => z.preprocess(blankToUndefined, z.string().optional());
 const optionalUrl = () => z.preprocess(blankToUndefined, z.string().url().optional());
@@ -20,82 +13,56 @@ const optionalUrl = () => z.preprocess(blankToUndefined, z.string().url().option
 const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, "BOT_TOKEN is required"),
 
-  PROGGAA_WEB_URL: z.preprocess(
-    blankToUndefined,
-    z.string().url().default("https://your-proggaa-domain.com")
-  ),
+  // --- Proggaa (the website) ---
+  // The public address of the website, e.g. https://progga-zeta.vercel.app.
+  // Used for every link the bot sends.
+  PROGGAA_WEB_URL: z.preprocess(blankToUndefined, z.string().url().default("http://localhost:3000")),
+  // Where the bot calls /api/bot/*. Defaults to PROGGAA_WEB_URL, which is right
+  // because the API is part of the same website.
   PROGGAA_API_URL: optionalUrl(),
+  // Shared secret the website checks on every /api/bot/* call (the website's own PROGGAA_API_KEY).
   PROGGAA_API_KEY: optionalString(),
-
-  DATABASE_URL: optionalString(),
 
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
-  // One switch for every service the website can answer. "mock" (default)
-  // keeps the in-memory demo data; "api" talks to the real Proggaa website.
-  // Any PROGGAA_<SERVICE>_PROVIDER below overrides this for just that service.
-  PROGGAA_PROVIDER: z.preprocess(blankToUndefinedEarly, providerEnum.default("mock")),
-  PROGGAA_ACHIEVEMENT_PROVIDER: optionalProvider(),
-
-  // Shared secret the website signs its event pushes with (its
-  // PROGGAA_BOT_WEBHOOK_SECRET). Events are received at POST /proggaa/events.
-  PROGGAA_BOT_WEBHOOK_SECRET: optionalString(),
-
-  PROGGAA_USER_PROVIDER: optionalProvider(),
-  PROGGAA_COURSE_PROVIDER: optionalProvider(),
-  PROGGAA_EXAM_PROVIDER: optionalProvider(),
-  PROGGAA_RESULT_PROVIDER: optionalProvider(),
-  PROGGAA_PAYMENT_PROVIDER: optionalProvider(),
-  PROGGAA_NOTIFICATION_PROVIDER: optionalProvider(),
-  PROGGAA_AI_PROVIDER: optionalProvider(),
-  PROGGAA_ADMIN_PROVIDER: optionalProvider(),
-  PROGGAA_LINK_PROVIDER: optionalProvider(),
-
-  DEV_SEED_ADMIN_TELEGRAM_ID: optionalString(),
-
-  // Comma-separated Telegram chat ids (negative numbers for groups/supergroups,
-  // e.g. "-1001234567890,-1009876543210") where Group Assistant mode (welcome,
-  // FAQ, moderation, announcements) is active. The bot ignores group-specific
-  // behavior in any chat not listed here, even if it's added to that group.
+  // Comma-separated Telegram chat ids (negative numbers for groups, e.g.
+  // "-1001234567890") where Group Assistant mode (welcome, FAQ, moderation) is
+  // active. Any other group the bot is added to is ignored.
   PROGGAA_GROUP_IDS: optionalString(),
 
-  // Directory for the bot's own JSON-file persistence (support tickets,
-  // group config, notification preferences). On Render this should be a
-  // mounted Disk's path. Leave unset for in-memory-only (e.g. local dev).
+  // Directory for the bot's own small JSON files (notification mutes, the
+  // notification relay position, group settings). On Render this is a mounted
+  // Disk. Unset means memory only, which resets on every restart.
   PERSISTENCE_DIR: optionalString(),
 
-  // --- Bot connection mode ---
-  // "polling": bot pulls updates from Telegram (simplest for local dev).
-  // "webhook": Telegram pushes updates to an HTTP endpoint we expose
-  // (needed for free-tier hosts like Render, whose free instance type
-  // only supports HTTP web services, not always-on background workers).
-  BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
+  // --- Notifications ---
+  // How often the bot asks the website for new notifications, in seconds.
+  RELAY_INTERVAL_SECONDS: z.coerce.number().int().min(15).max(3600).default(60),
+  // With no saved position (first start, or no disk) look this far back, so a
+  // restart does not drop what happened just before it. Already-sent ones are not repeated.
+  RELAY_LOOKBACK_MINUTES: z.coerce.number().int().min(1).max(1440).default(30),
 
-  // Public base URL Telegram should send webhook requests to, e.g.
-  // https://proggaa-bot.onrender.com. Required when BOT_MODE=webhook.
-  // Render automatically provides this via RENDER_EXTERNAL_URL, which
-  // index.ts falls back to if WEBHOOK_URL isn't set explicitly.
+  // --- Connection mode ---
+  // "polling": the bot pulls updates from Telegram (simplest for local use).
+  // "webhook": Telegram pushes updates to an HTTP endpoint (needed on hosts that
+  // only run web services, such as Render's free tier).
+  BOT_MODE: z.enum(["polling", "webhook"]).default("polling"),
+  // Public base URL Telegram should post to. Render provides RENDER_EXTERNAL_URL itself.
   WEBHOOK_URL: optionalUrl(),
   RENDER_EXTERNAL_URL: optionalUrl(),
-
-  // Random-looking path segment for the webhook route, so the endpoint
-  // isn't guessable (Telegram doesn't sign requests). Required when
-  // BOT_MODE=webhook. Generate one with: openssl rand -hex 20
-  WEBHOOK_SECRET_PATH: z.preprocess(blankToUndefined, z.string().min(8).optional()),
-
-  // Webhook mode only: ping our own public URL every 10 minutes so a free
-  // Render instance does not fall asleep. Set to "off" on a paid/always-on host.
+  // Random path segment for the webhook route. Required when BOT_MODE=webhook.
+  // Telegram requests are additionally checked with a secret header derived from it.
+  WEBHOOK_SECRET_PATH: z.preprocess(blankToUndefined, z.string().min(16).optional()),
+  // Webhook mode: ping our own public URL every 10 minutes so a free Render
+  // instance does not sleep. Set to "off" on a paid or always-on host.
   KEEP_ALIVE: z.preprocess(blankToUndefined, z.enum(["on", "off"]).default("on")),
-
-  // Port the HTTP server listens on in webhook mode. Render sets this
-  // automatically; PORT here is just the fallback for local testing.
   PORT: z.coerce.number().default(3000),
 });
 
 const envSchemaWithRefinements = envSchema
   .refine((data) => data.BOT_MODE !== "webhook" || !!data.WEBHOOK_SECRET_PATH, {
-    message: "WEBHOOK_SECRET_PATH is required when BOT_MODE=webhook",
+    message: "WEBHOOK_SECRET_PATH (at least 16 characters) is required when BOT_MODE=webhook",
     path: ["WEBHOOK_SECRET_PATH"],
   })
   .refine((data) => data.BOT_MODE !== "webhook" || !!(data.WEBHOOK_URL || data.RENDER_EXTERNAL_URL), {
@@ -110,9 +77,7 @@ function loadEnv(): Env {
   if (!parsed.success) {
     const details = parsed.error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
 
-    // In tests, throw instead of exiting the whole process — a hard
-    // process.exit() here would kill the test runner itself, not just
-    // fail the assertion, and would be very confusing to debug.
+    // In tests, throw instead of exiting: process.exit() would kill the runner.
     if (process.env.NODE_ENV === "test") {
       throw new Error(`Invalid environment configuration:\n${details}`);
     }

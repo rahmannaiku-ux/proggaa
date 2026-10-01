@@ -1,13 +1,14 @@
 import { z } from "zod";
 
 /**
- * Centralized validation so every handler that trusts a callback-query
- * payload or a free-text message runs it through the same rules, instead
- * of each file inventing its own regex. Keeping these as small named
- * exports also makes them independently unit-testable.
+ * Validation for anything that arrives from Telegram: message text and the ids
+ * inside button (callback) data. None of it is trusted, and an id that passes
+ * here is still only ever sent to the website, which does its own checks.
  */
 
-/** Proggaa entity ids as used throughout mock data, e.g. "pay_1", "exam_physics_midterm". */
+// Proggaa ids are cuids (letters and digits); the bot's own ids use "_" and "-".
+export const ENTITY_ID_PATTERN = "[A-Za-z0-9_-]{1,64}";
+
 const entityIdSchema = z
   .string()
   .min(1)
@@ -18,14 +19,17 @@ export function isValidEntityId(id: string): boolean {
   return entityIdSchema.safeParse(id).success;
 }
 
-/** Free-text limits, used to stop a single message from being pasted in as an abuse vector. */
+/** Telegram refuses callback data over 64 bytes; anything longer did not come from our buttons. */
+export const CALLBACK_DATA_MAX_BYTES = 64;
+
+export function isPlausibleCallbackData(data: string): boolean {
+  return Buffer.byteLength(data, "utf8") <= CALLBACK_DATA_MAX_BYTES && !/[\u0000-\u001f]/.test(data);
+}
+
 export const TEXT_LIMITS = {
-  supportMessage: 2000,
-  aiTopic: 200,
-  aiSourceText: 8000,
-  aiFileRef: 200,
-  announcementMessage: 1000,
-  transactionId: 100,
+  linkCode: 64,
+  rejectReason: 500,
+  groupAnnouncement: 1000,
 } as const;
 
 const nonEmptyTrimmed = (max: number) =>
@@ -42,4 +46,10 @@ export function validateBoundedText(
   const result = nonEmptyTrimmed(max).safeParse(raw);
   if (result.success) return { ok: true, value: result.data };
   return { ok: false, error: result.error.issues[0]?.message ?? "invalid input" };
+}
+
+/** A link code looks like XXXX-XXXX-XXXX; reject anything else before it reaches the website. */
+export function normalizeLinkCode(raw: string): string | null {
+  const code = raw.trim().toUpperCase();
+  return /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code) ? code : null;
 }

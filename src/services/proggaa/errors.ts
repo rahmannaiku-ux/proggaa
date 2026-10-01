@@ -1,5 +1,5 @@
 /**
- * Common error types thrown by Proggaa service implementations (mock or real).
+ * Common error types thrown by the Proggaa service implementations.
  * Bot-layer code should catch these and turn them into user-friendly
  * Telegram messages rather than leaking stack traces.
  */

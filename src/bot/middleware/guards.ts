@@ -1,18 +1,22 @@
 import type { ProggaaBotContext } from "../../types/session";
 import type { ProggaaRole } from "../../types/domain";
+import { NOT_LINKED_PROMPT, UNAUTHORIZED } from "../messages/copy";
 import { logger } from "../../utils/logger";
 
 /**
- * Guard helpers used at the start of command/callback handlers.
- * These return `true` if the request was rejected (and already replied to),
- * so the calling handler can `if (await requireLinked(ctx)) return;`.
+ * Guards for handlers. They return TRUE when the request was blocked (and the
+ * person has already been told why), so a handler reads:
+ *
+ *     if (await requireRole(ctx, ["ADMIN"])) return;
+ *
+ * Both rely on ctx.auth, which the auth middleware fills from the website's
+ * Telegram link on every update. A role the person claims, or one remembered
+ * from earlier, is never used.
  */
 
 export async function requireLinked(ctx: ProggaaBotContext): Promise<boolean> {
-  if (!ctx.auth.linked) {
-    await ctx.reply(
-      "🔗 This feature needs a connected Proggaa account.\n\nUse /link to connect your account first."
-    );
+  if (!ctx.auth.linked || !ctx.auth.proggaaUserId) {
+    await ctx.reply(NOT_LINKED_PROMPT);
     return true;
   }
   return false;
@@ -28,8 +32,11 @@ export async function requireRole(ctx: ProggaaBotContext, allowed: ProggaaRole[]
       role: ctx.auth.role,
       required: allowed.join(","),
     });
-    await ctx.reply("🚫 You don't have permission to use this feature.");
+    await ctx.reply(UNAUTHORIZED);
     return true;
   }
   return false;
 }
+
+/** Mentors, and admins, who can see every Mission. */
+export const MENTOR_ROLES: ProggaaRole[] = ["TEACHER", "ADMIN"];

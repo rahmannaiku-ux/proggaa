@@ -24,15 +24,19 @@ const REDACTED_KEYS = new Set([
   "secret",
 ]);
 
-function redact(meta?: Record<string, unknown>): Record<string, unknown> | undefined {
+/** Anything shaped like a Telegram bot token never reaches the logs, even inside an error message or stack. */
+const BOT_TOKEN_PATTERN = /\d{6,12}:[A-Za-z0-9_-]{30,}/g;
+
+export function scrub(value: unknown): unknown {
+  if (typeof value === "string") return value.replace(BOT_TOKEN_PATTERN, "[bot-token]");
+  return value;
+}
+
+export function redact(meta?: Record<string, unknown>): Record<string, unknown> | undefined {
   if (!meta) return meta;
   const clean: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(meta)) {
-    if (REDACTED_KEYS.has(key)) {
-      clean[key] = "[REDACTED]";
-    } else {
-      clean[key] = value;
-    }
+    clean[key] = REDACTED_KEYS.has(key) ? "[REDACTED]" : scrub(value);
   }
   return clean;
 }
@@ -42,7 +46,7 @@ function write(level: Level, message: string, meta?: Record<string, unknown>) {
   const entry = {
     ts: new Date().toISOString(),
     level,
-    message,
+    message: scrub(message),
     ...redact(meta),
   };
   const line = JSON.stringify(entry);

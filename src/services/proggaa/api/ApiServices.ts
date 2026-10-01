@@ -4,30 +4,36 @@ import type {
   Course,
   ExamResult,
   ExamSummary,
+  FeedNotification,
+  LiveClass,
   LiveExamStatus,
-  NotificationEvent,
   Payment,
+  ProggaaNotification,
   ProggaaRole,
   ProggaaUser,
-  SystemAlert,
   TeacherAnalytics,
 } from "../../../types/domain";
 import type {
+  FeedCursor,
   ProggaaAchievementService,
   ProggaaAdminService,
   ProggaaCourseService,
   ProggaaExamService,
+  ProggaaLiveClassService,
+  ProggaaNotificationFeed,
   ProggaaNotificationService,
   ProggaaPaymentService,
   ProggaaResultService,
   ProggaaUserService,
 } from "../interfaces";
-import { ProggaaServiceError } from "../errors";
+import { NotFoundError } from "../errors";
 import { ApiClient } from "./ApiClient";
 import {
   mapAchievement,
   mapCourse,
   mapExam,
+  mapFeedItem,
+  mapLiveClass,
   mapNotification,
   mapPayment,
   mapResult,
@@ -36,6 +42,8 @@ import {
   type WebAchievement,
   type WebCourse,
   type WebExam,
+  type WebFeedItem,
+  type WebLiveClass,
   type WebNotification,
   type WebPayment,
   type WebResult,
@@ -43,22 +51,24 @@ import {
 } from "./mappers";
 
 /**
- * Real implementations of the bot's Proggaa service interfaces, backed by the
- * website's /api/bot/* routes. Every method forwards the caller's Proggaa user
- * id, and the website re-checks that this account is linked and allowed to see
- * the thing it asked for, so the bot cannot be used to read someone else's data.
+ * The real implementations of the bot's Proggaa service interfaces, backed by
+ * the website's /api/bot/* routes. Every call forwards the caller's Proggaa
+ * user id; the website re-checks that this account is linked and allowed to see
+ * what was asked for, so the bot cannot be used to read someone else's data.
  */
+
+const enc = encodeURIComponent;
 
 export class ApiProggaaUserService implements ProggaaUserService {
   constructor(private readonly api: ApiClient) {}
 
   async getUserById(proggaaUserId: string): Promise<ProggaaUser | null> {
-    const user = await this.api.get<WebUser>(`/api/bot/users/${encodeURIComponent(proggaaUserId)}`);
+    const user = await this.api.get<WebUser>(`/api/bot/users/${enc(proggaaUserId)}`);
     return user ? mapUser(user) : null;
   }
 
   async getRole(proggaaUserId: string): Promise<ProggaaRole | null> {
-    const user = await this.api.get<WebUser>(`/api/bot/users/${encodeURIComponent(proggaaUserId)}`);
+    const user = await this.api.get<WebUser>(`/api/bot/users/${enc(proggaaUserId)}`);
     return user ? mapRole(user.role) : null;
   }
 }
@@ -85,43 +95,36 @@ export class ApiProggaaCourseService implements ProggaaCourseService {
     return (rows ?? []).map(mapCourse);
   }
 
-  async getCourseById(courseId: string, proggaaUserId?: string): Promise<Course | null> {
-    const id = encodeURIComponent(courseId);
-    // A teacher asking about one of their own courses gets the owner check;
-    // anyone else only ever sees published courses.
-    const course = proggaaUserId
-      ? await this.api.get<WebCourse>(`/api/bot/teacher/courses/${id}`, { teacherId: proggaaUserId }).catch(() => null)
-      : null;
-    const found = course ?? (await this.api.get<WebCourse>(`/api/bot/courses/${id}`));
-    return found ? mapCourse(found) : null;
-  }
-
   async getTeacherAnalytics(proggaaUserId: string): Promise<TeacherAnalytics> {
-    const courses = (await this.api.get<{ id: string }[]>("/api/bot/teacher/courses", { teacherId: proggaaUserId })) ?? [];
+    const courses =
+      (await this.api.get<{ id: string }[]>("/api/bot/teacher/courses", { teacherId: proggaaUserId })) ?? [];
+    type Row = {
+      enrollmentCount: number;
+      avgProgressPct: number;
+      completionRatePct: number;
+      avgExamScorePct: number | null;
+      studentsWithGradedAttempts: number;
+    };
     const rows = await Promise.all(
       courses.map((c) =>
-        this.api.get<{
-          enrollmentCount: number;
-          avgProgressPct: number;
-          completionRatePct: number;
-          avgExamScorePct: number | null;
-          studentsWithGradedAttempts: number;
-        }>(`/api/bot/teacher/courses/${encodeURIComponent(c.id)}/analytics`, { teacherId: proggaaUserId })
+        this.api.get<Row>(`/api/bot/teacher/courses/${enc(c.id)}/analytics`, { teacherId: proggaaUserId })
       )
     );
 
-    const present = rows.filter((r): r is NonNullable<typeof r> => r !== null);
-    const totalStudents = present.reduce((n, r) => n + r.enrollmentCount, 0);
-    // Weighted by head count so one big course is not drowned out by small ones.
-    const weighted = (pick: (r: (typeof present)[number]) => number, weight: (r: (typeof present)[number]) => number) => {
-      const w = present.reduce((n, r) => n + weight(r), 0);
-      return w ? Math.round(present.reduce((n, r) => n + pick(r) * weight(r), 0) / w) : 0;
+    const present = rows.filter((r): r is Row => r !== null);
+    // Weighted by head count so one big Mission is not drowned out by small ones.
+    const weighted = (pick: (r: Row) => number, weight: (r: Row) => number) => {
+      const total = present.reduce((n, r) => n + weight(r), 0);
+      return total ? Math.round(present.reduce((n, r) => n + pick(r) * weight(r), 0) / total) : 0;
     };
 
     return {
-      totalStudents,
+      totalStudents: present.reduce((n, r) => n + r.enrollmentCount, 0),
       avgCourseProgress: weighted((r) => r.avgProgressPct, (r) => r.enrollmentCount),
-      avgExamScore: weighted((r) => r.avgExamScorePct ?? 0, (r) => (r.avgExamScorePct === null ? 0 : r.studentsWithGradedAttempts)),
+      avgExamScore: weighted(
+        (r) => r.avgExamScorePct ?? 0,
+        (r) => (r.avgExamScorePct === null ? 0 : r.studentsWithGradedAttempts)
+      ),
       completionRate: weighted((r) => r.completionRatePct, (r) => r.enrollmentCount),
     };
   }
@@ -140,22 +143,6 @@ export class ApiProggaaExamService implements ProggaaExamService {
     return (rows ?? []).map((e) => mapExam(e));
   }
 
-  async getExamById(examId: string, proggaaUserId?: string): Promise<ExamSummary | null> {
-    if (!proggaaUserId) return null; // the website only shows an exam to someone enrolled in its course
-    const id = encodeURIComponent(examId);
-    const exam = await this.api
-      .get<WebExam>(`/api/bot/exams/${id}`, { userId: proggaaUserId })
-      .catch(() => null);
-    const found = exam ?? (await this.api.get<WebExam>(`/api/bot/teacher/exams/${id}`, { teacherId: proggaaUserId }).catch(() => null));
-    return found ? mapExam(found) : null;
-  }
-
-  async getLiveExamStatus(examId: string, proggaaUserId?: string): Promise<LiveExamStatus | null> {
-    if (!proggaaUserId) return null;
-    const rows = await this.api.get<LiveExamStatus[]>("/api/bot/teacher/exams/live", { teacherId: proggaaUserId, examId });
-    return rows?.[0] ?? null;
-  }
-
   async getLiveExamsForTeacher(proggaaUserId: string): Promise<LiveExamStatus[]> {
     return (await this.api.get<LiveExamStatus[]>("/api/bot/teacher/exams/live", { teacherId: proggaaUserId })) ?? [];
   }
@@ -169,16 +156,11 @@ export class ApiProggaaResultService implements ProggaaResultService {
     return (rows ?? []).map((r) => mapResult(r, proggaaUserId));
   }
 
-  async getResultById(resultId: string, proggaaUserId?: string): Promise<ExamResult | null> {
-    if (!proggaaUserId) return null;
-    const row = await this.api.get<WebResult>(`/api/bot/results/${encodeURIComponent(resultId)}`, { userId: proggaaUserId });
-    return row ? mapResult(row, proggaaUserId) : null;
-  }
-
-  async getPendingManualGradingCount(examId: string, proggaaUserId?: string): Promise<number> {
-    if (!proggaaUserId) return 0;
+  async getPendingManualGradingCount(proggaaUserId: string, examId: string): Promise<number> {
     const row = await this.api
-      .get<{ pendingCount: number }>(`/api/bot/teacher/exams/${encodeURIComponent(examId)}/grading-count`, { teacherId: proggaaUserId })
+      .get<{ pendingCount: number }>(`/api/bot/teacher/exams/${enc(examId)}/grading-count`, {
+        teacherId: proggaaUserId,
+      })
       .catch(() => null);
     return row?.pendingCount ?? 0;
   }
@@ -187,75 +169,76 @@ export class ApiProggaaResultService implements ProggaaResultService {
 export class ApiProggaaPaymentService implements ProggaaPaymentService {
   constructor(private readonly api: ApiClient) {}
 
-  async getPendingPayments(proggaaUserId?: string): Promise<Payment[]> {
-    if (!proggaaUserId) return [];
-    const rows = await this.api.get<WebPayment[]>("/api/bot/payments/pending", { userId: proggaaUserId });
-    return (rows ?? []).map((p) => mapPayment(p));
+  async getPaymentsForStudent(proggaaUserId: string): Promise<Payment[]> {
+    const rows = await this.api.get<WebPayment[]>("/api/bot/payments", { userId: proggaaUserId });
+    return (rows ?? []).map(mapPayment);
   }
 
-  async getPaymentById(paymentId: string, proggaaUserId?: string): Promise<Payment | null> {
-    if (!proggaaUserId) return null;
-    const row = await this.api.get<WebPayment>(`/api/bot/payments/${encodeURIComponent(paymentId)}`, { userId: proggaaUserId });
+  async getPendingPayments(adminProggaaUserId: string): Promise<Payment[]> {
+    const rows = await this.api.get<WebPayment[]>("/api/bot/payments/pending", { userId: adminProggaaUserId });
+    return (rows ?? []).map(mapPayment);
+  }
+
+  async getPayment(proggaaUserId: string, paymentId: string): Promise<Payment | null> {
+    const row = await this.api.get<WebPayment>(`/api/bot/payments/${enc(paymentId)}`, { userId: proggaaUserId });
     return row ? mapPayment(row) : null;
   }
 
-  async getPaymentsForStudent(proggaaUserId: string): Promise<Payment[]> {
-    const rows = await this.api.get<WebPayment[]>("/api/bot/payments", { userId: proggaaUserId });
-    return (rows ?? []).map((p) => mapPayment(p));
+  async approvePayment(adminProggaaUserId: string, paymentId: string): Promise<Payment> {
+    await this.api.post(`/api/bot/payments/${enc(paymentId)}/approve`, { adminUserId: adminProggaaUserId });
+    return this.refetch(adminProggaaUserId, paymentId);
   }
 
-  async submitTransactionId(): Promise<Payment> {
-    // The website checks the TXID against the payment device and the order,
-    // and that flow is only reachable from a signed-in browser session.
-    throw new ProggaaServiceError(
-      "Please send your Transaction ID from the payment page on the Proggaa website.",
-      "NOT_SUPPORTED"
-    );
-  }
-
-  async approvePayment(paymentId: string, approvedByProggaaUserId: string): Promise<Payment> {
-    await this.api.post(`/api/bot/payments/${encodeURIComponent(paymentId)}/approve`, {
-      adminUserId: approvedByProggaaUserId,
-    });
-    return this.refetch(paymentId, approvedByProggaaUserId);
-  }
-
-  async rejectPayment(paymentId: string, rejectedByProggaaUserId: string, reason?: string): Promise<Payment> {
-    await this.api.post(`/api/bot/payments/${encodeURIComponent(paymentId)}/reject`, {
-      adminUserId: rejectedByProggaaUserId,
+  async rejectPayment(adminProggaaUserId: string, paymentId: string, reason?: string): Promise<Payment> {
+    await this.api.post(`/api/bot/payments/${enc(paymentId)}/reject`, {
+      adminUserId: adminProggaaUserId,
       reason: reason?.trim() || "Rejected by an admin from Telegram.",
     });
-    return this.refetch(paymentId, rejectedByProggaaUserId);
+    return this.refetch(adminProggaaUserId, paymentId);
   }
 
-  private async refetch(paymentId: string, proggaaUserId: string): Promise<Payment> {
-    const payment = await this.getPaymentById(paymentId, proggaaUserId);
-    if (!payment) throw new ProggaaServiceError("Payment not found.", "NOT_FOUND");
+  private async refetch(proggaaUserId: string, paymentId: string): Promise<Payment> {
+    const payment = await this.getPayment(proggaaUserId, paymentId);
+    if (!payment) throw new NotFoundError("Payment");
     return payment;
+  }
+}
+
+export class ApiProggaaLiveClassService implements ProggaaLiveClassService {
+  constructor(private readonly api: ApiClient) {}
+
+  async getLiveClasses(proggaaUserId: string): Promise<LiveClass[]> {
+    const rows = await this.api.get<WebLiveClass[]>("/api/bot/live-classes", { userId: proggaaUserId });
+    return (rows ?? []).map(mapLiveClass);
   }
 }
 
 export class ApiProggaaNotificationService implements ProggaaNotificationService {
   constructor(private readonly api: ApiClient) {}
 
-  async getRecentNotifications(proggaaUserId: string, limit = 10): Promise<NotificationEvent[]> {
+  async getRecentNotifications(proggaaUserId: string, limit = 10): Promise<ProggaaNotification[]> {
     const rows = await this.api.get<WebNotification[]>("/api/bot/notifications", { userId: proggaaUserId, limit });
-    return (rows ?? []).map((n) => mapNotification(n, proggaaUserId));
+    return (rows ?? []).map(mapNotification);
   }
+}
 
-  /**
-   * Notifications already live on the website, so there is nothing to store
-   * here. The wrapper in the container pushes the event to Telegram.
-   */
-  async dispatch(): Promise<void> {
-    return;
+export class ApiProggaaNotificationFeed implements ProggaaNotificationFeed {
+  constructor(private readonly api: ApiClient) {}
+
+  async fetchAfter(cursor: FeedCursor, limit = 50): Promise<FeedNotification[]> {
+    const rows = await this.api.get<WebFeedItem[]>("/api/bot/notifications/feed", {
+      after: cursor.createdAt,
+      afterId: cursor.id,
+      limit,
+    });
+    return (rows ?? []).map(mapFeedItem);
   }
 }
 
 export class ApiProggaaAdminService implements ProggaaAdminService {
   constructor(private readonly api: ApiClient) {}
 
-  async getStatistics(adminProggaaUserId?: string): Promise<AdminStatistics> {
+  async getStatistics(adminProggaaUserId: string): Promise<AdminStatistics> {
     const row = await this.api.get<{
       studentCount: number;
       teacherCount: number;
@@ -265,28 +248,18 @@ export class ApiProggaaAdminService implements ProggaaAdminService {
       todaysPaymentsCents: number;
       currency: string;
     }>("/api/bot/admin/statistics", { userId: adminProggaaUserId });
-    if (!row) throw new ProggaaServiceError("Statistics are not available.", "NOT_FOUND");
+    if (!row) throw new NotFoundError("Statistics");
     const { todaysPaymentsCents, ...rest } = row;
     return { ...rest, todaysPaymentsTotal: todaysPaymentsCents / 100 };
   }
 
-  async listUsers(role?: ProggaaRole, adminProggaaUserId?: string): Promise<ProggaaUser[]> {
+  async listUsers(adminProggaaUserId: string, role?: ProggaaRole): Promise<ProggaaUser[]> {
     const rows = await this.api.get<WebUser[]>("/api/bot/admin/users", {
       userId: adminProggaaUserId,
+      // The website has SUPER_ADMIN and ADMIN; the bot calls both "ADMIN", so filter here.
       role: role === "ADMIN" ? undefined : role,
     });
     const users = (rows ?? []).map(mapUser);
     return role ? users.filter((u) => u.role === role) : users;
-  }
-
-  async disqualifyStudent(): Promise<void> {
-    throw new ProggaaServiceError(
-      "Disqualifying a student is done from the exam monitor on the Proggaa website.",
-      "NOT_SUPPORTED"
-    );
-  }
-
-  async getAlerts(): Promise<SystemAlert[]> {
-    return [];
   }
 }

@@ -4,11 +4,11 @@ import { logger } from "./logger";
 import { env } from "../config/env";
 
 /**
- * A tiny JSON-file-backed store for the bot's own state (support tickets,
- * group config, notification preferences, ...) — NOT for anything that
+ * A tiny JSON-file-backed store for the bot's own state (notification mutes,
+ * the notification relay position, group settings) — NOT for anything that
  * belongs in the real Proggaa database, and NOT a substitute for a real
  * DB at scale. This exists so a Render redeploy doesn't silently wipe
- * every open support ticket and every student's mute preferences.
+ * every hero's notification mutes and the relay's position.
  *
  * Enabled by setting PERSISTENCE_DIR to a writable, persistent path (on
  * Render: a mounted Disk). When unset, everything behaves exactly as

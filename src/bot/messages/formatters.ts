@@ -5,45 +5,24 @@ import type {
   ExamResult,
   ExamStatus,
   ExamSummary,
+  LiveClass,
   LiveExamStatus,
   Payment,
+  ProggaaNotification,
+  ProggaaUser,
 } from "../../types/domain";
+import { formatBstDateTime, relativeTime } from "../../utils/time";
+import { ICON, TERMS, esc, formatNumber, formatTaka, plural, progressBar } from "./brand";
 
-export function progressBar(percent: number, length = 10): string {
-  const clamped = Math.max(0, Math.min(100, percent));
-  const filled = Math.round((clamped / 100) * length);
-  return "▓".repeat(filled) + "░".repeat(length - filled);
-}
-
-export function formatDateTime(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function relativeTimeFromNow(iso: string): string {
-  const diffMs = new Date(iso).getTime() - Date.now();
-  const diffMin = Math.round(diffMs / 60000);
-  const abs = Math.abs(diffMin);
-
-  if (abs < 60) return diffMin >= 0 ? `in ${abs} min` : `${abs} min ago`;
-  const diffHr = Math.round(diffMin / 60);
-  if (Math.abs(diffHr) < 24) return diffMin >= 0 ? `in ${Math.abs(diffHr)}h` : `${Math.abs(diffHr)}h ago`;
-  const diffDays = Math.round(diffHr / 24);
-  return diffMin >= 0 ? `in ${Math.abs(diffDays)}d` : `${Math.abs(diffDays)}d ago`;
-}
+/** Every time shown to a person goes through utils/time.ts, so it always reads in Bangladesh time. */
+export { formatBstDateTime as formatDateTime, relativeTime };
 
 const EXAM_STATUS_LABEL: Record<ExamStatus, string> = {
   SCHEDULED: "🗓️ Scheduled",
-  STARTING_SOON: "🟡 Starting soon",
-  LIVE: "🔴 Live now",
+  STARTING_SOON: `${ICON.liveSoon} Starting soon`,
+  LIVE: `${ICON.live} Live now`,
   ENDING_SOON: "🟠 Ending soon",
-  COMPLETED: "✅ Completed",
+  COMPLETED: `${ICON.done} Completed`,
   CANCELLED: "🚫 Cancelled",
 };
 
@@ -51,82 +30,97 @@ export function examStatusLabel(status: ExamStatus): string {
   return EXAM_STATUS_LABEL[status];
 }
 
-export function formatCourseCard(course: Course): string {
-  const lines = [`📚 *${course.name}*`, "", `Progress: ${course.progressPercent}%`, progressBar(course.progressPercent)];
-  if (course.nextLessonTitle) lines.push(`Next: ${course.nextLessonTitle}`);
-  if (course.upcomingExamTitle) lines.push("", `📝 Exam: ${course.upcomingExamTitle}`);
-  return lines.join("\n");
+/** The hero's identity block: level, XP bar, Proggy Coins, streak. */
+export function formatHeroStats(user: ProggaaUser): string {
+  const percent = user.xpForNextLevel > 0 ? (user.xpIntoLevel / user.xpForNextLevel) * 100 : 100;
+  return [
+    `${ICON.level} Level ${user.level}   ${ICON.xp} ${formatNumber(user.xp)} XP`,
+    `${progressBar(percent)} ${formatNumber(user.xpIntoLevel)}/${formatNumber(user.xpForNextLevel)} to next level`,
+    `${ICON.coins} ${formatNumber(user.coinBalance)} ${TERMS.coins}   ${ICON.streak} ${plural(user.streakDays, "day")} streak`,
+  ].join("\n");
 }
 
-export function formatExamCard(exam: ExamSummary): string {
+export function formatMissionCard(course: Course): string {
+  return [`${ICON.mission} *${esc(course.name)}*`, `${progressBar(course.progressPercent)} ${course.progressPercent}%`].join("\n");
+}
+
+export function formatEncounterCard(exam: ExamSummary): string {
   const lines = [
-    `📝 *${exam.title}*`,
-    "",
-    `Course: ${exam.courseName}`,
+    `${ICON.encounter} *${esc(exam.title)}*`,
+    `${TERMS.course}: ${esc(exam.courseName)}`,
     `Status: ${examStatusLabel(exam.status)}`,
   ];
   if (exam.status === "COMPLETED") {
-    lines.push(`Was: ${formatDateTime(exam.startsAt)}`);
+    lines.push(`Was: ${formatBstDateTime(exam.startsAt)}`);
   } else {
-    lines.push(`Starts: ${formatDateTime(exam.startsAt)} (${relativeTimeFromNow(exam.startsAt)})`);
+    lines.push(`Starts: ${formatBstDateTime(exam.startsAt)} (${relativeTime(exam.startsAt)})`);
   }
-  lines.push(`Duration: ${exam.durationMinutes} minutes`);
+  if (exam.durationMinutes > 0) lines.push(`Time limit: ${plural(exam.durationMinutes, "minute")}`);
   return lines.join("\n");
 }
 
 export function formatResultCard(result: ExamResult): string {
   return [
-    `📊 *${result.examTitle}*`,
-    "",
-    `Score: ${result.score}/${result.maxScore}`,
-    `Percentage: ${result.percentage}%`,
+    `${ICON.result} *${esc(result.examTitle)}*`,
+    `Score: ${result.score}/${result.maxScore}  (${result.percentage}%)`,
     `Grade: ${result.grade}`,
-    `Published: ${formatDateTime(result.publishedAt)}`,
+    `Submitted: ${formatBstDateTime(result.publishedAt)}`,
   ].join("\n");
 }
 
 export function formatAchievementCard(achievement: Achievement): string {
   return [
-    `🏆 *${achievement.name}*`,
-    achievement.description,
-    `+${achievement.xpAwarded} XP · unlocked ${formatDateTime(achievement.unlockedAt)}`,
+    `${ICON.achievement} *${esc(achievement.name)}*`,
+    esc(achievement.description),
+    `+${achievement.xpAwarded} XP · ${formatBstDateTime(achievement.unlockedAt)}`,
   ].join("\n");
 }
 
-export function formatPaymentCard(payment: Payment): string {
+export function formatLiveClassCard(liveClass: LiveClass): string {
+  const live = liveClass.status === "LIVE";
   return [
-    `💰 *${payment.status === "PENDING" ? "New Payment" : "Payment"}*`,
-    "",
-    `Student: ${payment.studentName}`,
-    `Course: ${payment.courseName}`,
-    `Amount: ৳${payment.amount}`,
-    `Transaction ID: ${payment.transactionId}`,
-    `Status: ${payment.status}`,
+    `${live ? ICON.live : ICON.liveSoon} *${esc(liveClass.title)}*`,
+    `${TERMS.course}: ${esc(liveClass.missionTitle)}`,
+    live
+      ? `Live now, until ${formatBstDateTime(liveClass.endsAt)}`
+      : `Starts ${formatBstDateTime(liveClass.startsAt)} (${relativeTime(liveClass.startsAt)})`,
   ].join("\n");
+}
+
+export function formatPaymentCard(payment: Payment, options: { showStudent?: boolean } = {}): string {
+  const status = { PENDING: "⏳ Waiting for verification", APPROVED: `${ICON.done} Verified`, REJECTED: `${ICON.danger} Rejected` }[
+    payment.status
+  ];
+  const lines = [`${ICON.payment} *${esc(payment.courseName || "Payment")}*`];
+  if (options.showStudent && payment.studentName) lines.push(`${TERMS.student}: ${esc(payment.studentName)}`);
+  lines.push(`Amount: ${formatTaka(payment.amount)}`);
+  if (payment.transactionId) lines.push(`Transaction ID: \`${payment.transactionId.replace(/`/g, "")}\``);
+  lines.push(`Status: ${status}`, `Created: ${formatBstDateTime(payment.createdAt)}`);
+  return lines.join("\n");
 }
 
 export function formatLiveExamCard(status: LiveExamStatus): string {
   return [
-    "🔴 *LIVE EXAM*",
-    "",
-    status.examTitle,
-    "",
-    `👥 Students: ${status.totalStudents}`,
+    `${ICON.live} *Live ${TERMS.exam}*`,
+    esc(status.examTitle),
+    `${TERMS.student}s: ${status.totalStudents}`,
     `🟢 Active: ${status.activeStudents}`,
-    `✅ Submitted: ${status.submittedStudents}`,
-    `⚠️ Suspicious events: ${status.suspiciousEvents}`,
+    `${ICON.done} Submitted: ${status.submittedStudents}`,
+    `${ICON.warn} Integrity flags: ${status.suspiciousEvents}`,
   ].join("\n");
 }
 
 export function formatAdminStats(stats: AdminStatistics): string {
   return [
-    "📊 *Proggaa Statistics*",
-    "",
-    `👥 Students: ${stats.studentCount.toLocaleString()}`,
-    `👨‍🏫 Teachers: ${stats.teacherCount.toLocaleString()}`,
-    `📚 Courses: ${stats.courseCount.toLocaleString()}`,
-    `📝 Exams: ${stats.examCount.toLocaleString()}`,
-    `🔴 Live Exams: ${stats.liveExamCount}`,
-    `💰 Today's Payments: ${stats.currency === "BDT" ? "৳" : stats.currency + " "}${stats.todaysPaymentsTotal.toLocaleString()}`,
+    `${ICON.brand} *Proggaa today*`,
+    `${TERMS.student}s: ${formatNumber(stats.studentCount)}`,
+    `${TERMS.teacher}s: ${formatNumber(stats.teacherCount)}`,
+    `${TERMS.courses}: ${formatNumber(stats.courseCount)}`,
+    `${TERMS.exams}: ${formatNumber(stats.examCount)}  (${stats.liveExamCount} live now)`,
+    `${ICON.payment} Collected today: ${stats.currency === "BDT" ? formatTaka(stats.todaysPaymentsTotal) : `${stats.currency} ${formatNumber(stats.todaysPaymentsTotal)}`}`,
   ].join("\n");
+}
+
+export function formatNotificationLine(n: ProggaaNotification): string {
+  return `${ICON.bell} *${esc(n.title)}*\n${esc(n.body)}\n_${formatBstDateTime(n.createdAt)}_`;
 }

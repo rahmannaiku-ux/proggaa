@@ -11,7 +11,7 @@ describe("startKeepAlive", () => {
 
     await vi.advanceTimersByTimeAsync(3000);
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[0][0]).toBe("https://bot.example/healthz");
+    expect((fetchMock.mock.calls as unknown[][])[0]![0]).toBe("https://bot.example/healthz");
 
     stop();
     await vi.advanceTimersByTimeAsync(3000);

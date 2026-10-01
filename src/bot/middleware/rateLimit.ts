@@ -7,39 +7,57 @@ interface Bucket {
   windowStartedAt: number;
 }
 
-const WINDOW_MS = 10_000; // 10 seconds
-const MAX_REQUESTS_PER_WINDOW = 15;
+export interface RateLimitRule {
+  windowMs: number;
+  max: number;
+}
 
-const buckets = new Map<string, Bucket>();
+/** Everything a person can do, per Telegram id. */
+export const GENERAL_LIMIT: RateLimitRule = { windowMs: 10_000, max: 15 };
+/** Trying link codes: the website limits this too, the bot just stops the noise early. */
+export const LINK_ATTEMPT_LIMIT: RateLimitRule = { windowMs: 10 * 60_000, max: 6 };
 
-/**
- * Simple in-memory sliding-window rate limiter, keyed by Telegram user id.
- * Good enough for a single-process bot; swap for a shared store (Redis)
- * if the bot is ever horizontally scaled.
- */
+/** A fixed-window counter per key. Old windows are dropped so memory cannot grow without bound. */
+export class RateLimiter {
+  private readonly buckets = new Map<string, Bucket>();
+
+  constructor(private readonly rule: RateLimitRule, private readonly now: () => number = Date.now) {}
+
+  /** Counts one hit and returns true if it is allowed. */
+  hit(key: string): boolean {
+    const now = this.now();
+    this.prune(now);
+
+    const bucket = this.buckets.get(key);
+    if (!bucket || now - bucket.windowStartedAt >= this.rule.windowMs) {
+      this.buckets.set(key, { count: 1, windowStartedAt: now });
+      return true;
+    }
+    bucket.count += 1;
+    return bucket.count <= this.rule.max;
+  }
+
+  private prune(now: number) {
+    if (this.buckets.size < 1000) return;
+    for (const [key, bucket] of this.buckets) {
+      if (now - bucket.windowStartedAt >= this.rule.windowMs) this.buckets.delete(key);
+    }
+  }
+}
+
+const general = new RateLimiter(GENERAL_LIMIT);
+export const linkAttempts = new RateLimiter(LINK_ATTEMPT_LIMIT);
+
 export const rateLimitMiddleware: MiddlewareFn<ProggaaBotContext> = async (ctx, next) => {
   const key = ctx.from?.id?.toString();
   if (!key) return next();
 
-  const now = Date.now();
-  const bucket = buckets.get(key);
+  if (general.hit(key)) return next();
 
-  if (!bucket || now - bucket.windowStartedAt > WINDOW_MS) {
-    buckets.set(key, { count: 1, windowStartedAt: now });
-    return next();
+  logger.warn("rate_limit.exceeded", { telegramId: key });
+  if (ctx.callbackQuery) {
+    await ctx.answerCbQuery("You're going a bit fast. Please slow down.", { show_alert: false });
+  } else {
+    await ctx.reply("⏳ You're sending messages too quickly. Please wait a moment and try again.");
   }
-
-  bucket.count += 1;
-
-  if (bucket.count > MAX_REQUESTS_PER_WINDOW) {
-    logger.warn("rate_limit.exceeded", { telegramId: key });
-    if (ctx.callbackQuery) {
-      await ctx.answerCbQuery("You're going a bit fast — please slow down.", { show_alert: false });
-    } else {
-      await ctx.reply("⏳ You're sending messages too quickly. Please wait a moment and try again.");
-    }
-    return;
-  }
-
-  return next();
 };

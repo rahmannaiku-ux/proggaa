@@ -1,83 +1,82 @@
+import { ICON, esc } from "./brand";
+
 /**
- * Centralized bot copy. Keeping user-facing text here (rather than inline
- * in handlers) makes tone/branding consistent and easy to review or
- * localize later.
+ * All the fixed wording of the bot lives here, so tone and Proggaa's words
+ * (Mission, Patrol, Encounter, Hero, Mentor, Proggy Coins) stay consistent.
  */
 
-export const BRAND = "🎓 Proggaa";
+export const BRAND = `${ICON.brand} *Proggaa*`;
 
 export const WELCOME_LINKED = (name: string) =>
-  `${BRAND} Welcome back, ${name}!\n\n` +
-  `Good to see you again. Your dashboard, courses, and exams are just a tap away.\n\n` +
-  `Send /dashboard to jump straight in, or /help for the full list of commands.`;
+  `${BRAND}\n\nWelcome back, ${esc(name)}! ${ICON.xp}\n\n` +
+  `Your Missions, Encounters, Proggy Coins and live classes are one tap away.\n` +
+  `Send /dashboard to jump in, or /help to see everything I can do.`;
 
 export const WELCOME_UNLINKED =
-  `${BRAND} Welcome to Proggaa!\n\n` +
-  `I'm your learning companion right here on Telegram — track courses, take exams, ` +
-  `check results, and get notified the moment something needs your attention, ` +
-  `all without opening the website.\n\n` +
-  `Here's what I can do once you're connected:\n` +
-  `📚 View your courses and progress\n` +
-  `📝 Take exams and see results instantly\n` +
-  `🏆 Track your achievements\n` +
-  `🔔 Get notified about deadlines and updates\n\n` +
-  `Tap *Connect Proggaa* below to link your account, or send /link if you already ` +
-  `have a one-time code from the website.\n\n` +
-  `Not connected yet? No worries — send /help anytime to see what's available.`;
+  `${BRAND}\n\nI'm your Proggaa companion on Telegram.\n\n` +
+  `Once you connect your account I can show your Missions and progress, your XP and Proggy Coins, ` +
+  `upcoming Encounters and live classes, and send you the same notifications you get on the website.\n\n` +
+  `Tap *Connect Proggaa* to begin, or send /link.`;
 
-export const HELP_TEXT =
-  `${BRAND} Help\n\n` +
-  `*General*\n` +
-  `/start — Open the main menu\n` +
-  `/link — Connect your Proggaa account\n` +
-  `/unlink — Disconnect your Proggaa account\n` +
-  `/dashboard — Your personalized dashboard\n` +
-  `/courses — Your courses\n` +
-  `/exams — Your exams\n` +
-  `/results — Your exam results\n` +
-  `/achievements — Your unlocked achievements\n` +
-  `/notifications — Recent notifications\n` +
-  `/settings — Notification preferences\n` +
-  `/support — Get help\n\n` +
-  `*Teacher*\n` +
-  `/teacher — Teacher dashboard\n` +
-  `/ai — Generate exam questions\n\n` +
-  `*Admin*\n` +
-  `/admin — Admin dashboard\n` +
-  `/payments — Pending payments\n` +
-  `/stats — Platform statistics`;
+export const HELP_TEXT = (role: "STUDENT" | "TEACHER" | "ADMIN" | "NONE") => {
+  const lines = [
+    `${BRAND} *Help*`,
+    "",
+    "*Everyone*",
+    "/start — main menu",
+    "/link — connect your Proggaa account",
+    "/unlink — disconnect it",
+    "/help — this list",
+  ];
+  if (role !== "NONE") {
+    lines.push(
+      "",
+      "*Your Proggaa*",
+      "/dashboard — level, XP, Proggy Coins and what is next",
+      "/missions — your Missions and progress",
+      "/exams — your Encounters",
+      "/results — your results",
+      "/live — live and upcoming live classes",
+      "/wallet — your Proggy Coins",
+      "/achievements — what you unlocked",
+      "/progress — your overall progress",
+      "/studyplan — what to do next",
+      "/notifications — your latest notifications",
+      "/settings — choose which notifications reach Telegram",
+      "/support — get help"
+    );
+  }
+  if (role === "TEACHER" || role === "ADMIN") lines.push("", "*Mentor*", "/teacher — your Missions, Encounters and grading");
+  if (role === "ADMIN") lines.push("", "*Admin*", "/admin — admin tools", "/payments — payments waiting for verification", "/stats — platform numbers");
+  return lines.join("\n");
+};
 
 export const LINK_INTRO =
-  `${BRAND} Connect your account\n\n` +
-  `1️⃣ Open Proggaa on the website\n` +
-  `2️⃣ Go to *Settings → Telegram*\n` +
-  `3️⃣ Generate a one-time code\n` +
-  `4️⃣ Send that code here\n\n` +
-  `We never ask for your password. The code expires after a few minutes.`;
+  `${BRAND} *Connect your account*\n\n` +
+  `1️⃣ Open Proggaa and sign in\n` +
+  `2️⃣ Go to *Settings → Telegram* (${esc("/settings/telegram")})\n` +
+  `3️⃣ Press *Generate code*\n` +
+  `4️⃣ Send the code here\n\n` +
+  `I never ask for your password. The code works once and expires after 10 minutes.`;
 
 export const LINK_ALREADY_LINKED =
-  "✅ Your Telegram account is already connected to Proggaa. Use /unlink first if you want to connect a different account.";
+  `${ICON.done} This Telegram account is already connected to Proggaa. Use /unlink first to connect a different account.`;
 
 export const LINK_SUCCESS = (name: string, role: string) =>
-  `✅ Connected!\n\nWelcome, ${name} (${role}). You now have full access to your Proggaa dashboard here.`;
+  `${ICON.done} *Connected!*\n\nWelcome, ${esc(name)} (${role.toLowerCase()}). Send /dashboard to start.`;
 
 export const LINK_INVALID_OR_EXPIRED =
-  "❌ That code is invalid or has expired. Generate a new one from Proggaa → Settings → Telegram and try again.";
+  `${ICON.danger} That code is invalid, already used, or expired. Generate a new one on Proggaa under Settings → Telegram and try again.`;
 
 export const LINK_ACCOUNT_MISMATCH =
-  "❌ That code belongs to a different Telegram account. Please generate a new code from the account you want to connect.";
+  `${ICON.danger} That code belongs to a different Telegram account. Generate a new code and send it from the account you want to connect.`;
 
-export const UNLINK_CONFIRM = "Are you sure you want to disconnect your Proggaa account from Telegram?";
-export const UNLINK_SUCCESS = "🔓 Your Proggaa account has been disconnected. Use /link to reconnect anytime.";
-export const UNLINK_NOT_LINKED = "You don't currently have a connected Proggaa account.";
+export const UNLINK_CONFIRM = "Disconnect your Proggaa account from this Telegram chat?";
+export const UNLINK_SUCCESS = `🔓 Disconnected. Use /link to connect again any time.`;
+export const UNLINK_NOT_LINKED = "No Proggaa account is connected to this chat.";
 
-export const NOT_LINKED_PROMPT =
-  "🔗 This feature needs a connected Proggaa account.\n\nUse /link to connect your account first.";
+export const NOT_LINKED_PROMPT = `${ICON.link} Connect your Proggaa account first with /link.`;
+export const UNAUTHORIZED = `🚫 Your Proggaa role can't use this.`;
 
-export const UNAUTHORIZED = "🚫 You don't have permission to use this feature.";
-
-export const GENERIC_ERROR =
-  "😕 Something went wrong on our end. Please try again in a moment, or use /support if it keeps happening.";
-
-export const COMING_SOON = (feature: string) =>
-  `🚧 ${feature} is coming in a future update. The underlying service interface is already in place — this screen will light up once it's connected to real Proggaa data.`;
+export const GENERIC_ERROR = `😕 Something went wrong on our side. Please try again in a moment, or use /support if it keeps happening.`;
+export const UNAVAILABLE_ERROR = `${ICON.warn} Proggaa isn't answering right now. Please try again in a minute.`;

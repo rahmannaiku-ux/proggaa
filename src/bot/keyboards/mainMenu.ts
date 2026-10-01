@@ -1,112 +1,106 @@
 import { Markup } from "telegraf";
+import type { ProggaaRole } from "../../types/domain";
+import { ICON, TERMS } from "../messages/brand";
 
-export function startKeyboard(linked: boolean) {
+/**
+ * Callback data conventions (all ASCII, under Telegram's 64 byte limit):
+ *   menu:<screen>        open a hero screen        teacher:<screen>   mentor screens
+ *   admin:<screen>       admin screens             payment:<verb>:...  confirmed actions
+ * Handlers re-check the person's role from the website on every tap, so these
+ * strings are only routing, never permission.
+ */
+
+export function startKeyboard(linked: boolean, role?: ProggaaRole) {
+  if (!linked) {
+    return Markup.inlineKeyboard([
+      [Markup.button.callback(`${ICON.link} Connect Proggaa`, "start:link")],
+      [Markup.button.callback(`${ICON.help} Help`, "menu:help")],
+    ]);
+  }
+
   const rows = [
-    [Markup.button.callback(linked ? "🔗 Account Connected ✅" : "🔗 Connect Proggaa", "start:link")],
+    [Markup.button.callback("🏠 Dashboard", "menu:dashboard")],
     [
-      Markup.button.callback("📚 My Courses", "menu:courses"),
-      Markup.button.callback("📝 Exams", "menu:exams"),
+      Markup.button.callback(`${ICON.mission} ${TERMS.courses}`, "menu:missions"),
+      Markup.button.callback(`${ICON.encounter} ${TERMS.exams}`, "menu:exams"),
     ],
     [
-      Markup.button.callback("📊 Results", "menu:results"),
-      Markup.button.callback("🏆 Achievements", "menu:achievements"),
+      Markup.button.callback(`${ICON.live} Live classes`, "menu:live"),
+      Markup.button.callback(`${ICON.result} Results`, "menu:results"),
     ],
     [
-      Markup.button.callback("🔔 Notifications", "menu:notifications"),
-      Markup.button.callback("⚙️ Settings", "menu:settings"),
+      Markup.button.callback(`${ICON.coins} ${TERMS.coins}`, "menu:wallet"),
+      Markup.button.callback(`${ICON.achievement} Achievements`, "menu:achievements"),
     ],
-    [Markup.button.callback("❓ Help", "menu:help")],
+    [
+      Markup.button.callback(`${ICON.bell} Notifications`, "menu:notifications"),
+      Markup.button.callback(`${ICON.settings} Settings`, "menu:settings"),
+    ],
   ];
+  if (role === "TEACHER" || role === "ADMIN") rows.push([Markup.button.callback(`${ICON.mentor} ${TERMS.teacher} tools`, "menu:teacher")]);
+  if (role === "ADMIN") rows.push([Markup.button.callback(`${ICON.admin} Admin tools`, "menu:admin")]);
+  rows.push([Markup.button.callback(`${ICON.help} Help`, "menu:help"), Markup.button.callback("🆘 Support", "menu:support")]);
   return Markup.inlineKeyboard(rows);
 }
 
 export function studentDashboardKeyboard() {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback("📚 Courses", "menu:courses"),
-      Markup.button.callback("📝 Exams", "menu:exams"),
+      Markup.button.callback(`${ICON.mission} ${TERMS.courses}`, "menu:missions"),
+      Markup.button.callback(`${ICON.encounter} ${TERMS.exams}`, "menu:exams"),
     ],
     [
-      Markup.button.callback("📊 Results", "menu:results"),
-      Markup.button.callback("🏆 My Progress", "menu:progress"),
+      Markup.button.callback(`${ICON.live} Live classes`, "menu:live"),
+      Markup.button.callback(`${ICON.coins} ${TERMS.coins}`, "menu:wallet"),
     ],
     [
-      Markup.button.callback("🧠 Study Assistant", "menu:study"),
-      Markup.button.callback("📅 Study Plan", "menu:studyplan"),
+      Markup.button.callback("📈 Progress", "menu:progress"),
+      Markup.button.callback("🗓️ What's next", "menu:studyplan"),
     ],
-    [Markup.button.callback("🚨 Exam Help", "menu:examhelp")],
-    [
-      Markup.button.callback("🔔 Notifications", "menu:notifications"),
-      Markup.button.callback("🆘 Support", "support:menu"),
-    ],
-    [
-      Markup.button.callback("💳 Payments", "menu:payments"),
-      Markup.button.callback("⚙️ Settings", "menu:settings"),
-    ],
+    [Markup.button.callback("⬅️ Menu", "menu:home")],
   ]);
 }
 
 export function teacherDashboardKeyboard() {
   return Markup.inlineKeyboard([
     [
-      Markup.button.callback("📚 Courses", "teacher:courses"),
-      Markup.button.callback("📝 Exams", "teacher:exams"),
+      Markup.button.callback(`${ICON.mission} ${TERMS.courses}`, "teacher:missions"),
+      Markup.button.callback(`${ICON.encounter} ${TERMS.exams}`, "teacher:exams"),
     ],
     [
-      Markup.button.callback("🔴 Live Exams", "teacher:live"),
+      Markup.button.callback(`${ICON.live} Live ${TERMS.exams}`, "teacher:live"),
       Markup.button.callback("📝 Grading", "teacher:grading"),
     ],
-    [
-      Markup.button.callback("📊 Analytics", "teacher:analytics"),
-      Markup.button.callback("📢 Announcements", "teacher:announcements"),
-    ],
-    [Markup.button.callback("🎫 Student Tickets", "teacher:tickets")],
+    [Markup.button.callback("📊 Analytics", "teacher:analytics")],
+    [Markup.button.callback("⬅️ Menu", "menu:home")],
   ]);
 }
 
-export function adminDashboardKeyboard() {
-  return Markup.inlineKeyboard([
+export function adminDashboardKeyboard(hasGroups: boolean) {
+  const rows = [
     [
-      Markup.button.callback("💰 Payments", "admin:payments"),
-      Markup.button.callback("👥 Users", "admin:users"),
+      Markup.button.callback(`${ICON.payment} Payments`, "admin:payments"),
+      Markup.button.callback(`${TERMS.student}s & users`, "admin:users"),
     ],
-    [
-      Markup.button.callback("📚 Courses", "admin:courses"),
-      Markup.button.callback("📝 Exams", "admin:exams"),
-    ],
-    [
-      Markup.button.callback("📊 Statistics", "admin:stats"),
-      Markup.button.callback("🚨 Alerts", "admin:alerts"),
-    ],
-    [
-      Markup.button.callback("🎫 Support Center", "admin:support"),
-    ],
-    [
-      Markup.button.callback("📢 Group Announce", "admin:groupannounce"),
-      Markup.button.callback("🚨 Group Moderation", "admin:moderation"),
-    ],
-    [Markup.button.callback("⚙️ Group Settings", "admin:groupsettings")],
-  ]);
+    [Markup.button.callback("📊 Statistics", "admin:stats")],
+  ];
+  if (hasGroups) {
+    rows.push([
+      Markup.button.callback("📢 Group announce", "admin:groupannounce"),
+      Markup.button.callback("⚙️ Group settings", "admin:groupsettings"),
+    ]);
+    rows.push([Markup.button.callback("🚨 Group moderation", "admin:moderation")]);
+  }
+  rows.push([Markup.button.callback("⬅️ Menu", "menu:home")]);
+  return Markup.inlineKeyboard(rows);
 }
 
-export function paymentApprovalKeyboard(paymentId: string) {
+export function confirmKeyboard(confirmData: string, cancelData: string, confirmLabel = "✅ Confirm") {
   return Markup.inlineKeyboard([
-    [
-      Markup.button.callback("✅ Approve", `payment:approve:ask:${paymentId}`),
-      Markup.button.callback("❌ Reject", `payment:reject:ask:${paymentId}`),
-    ],
-  ]);
-}
-
-export function confirmKeyboard(confirmData: string, cancelData: string) {
-  return Markup.inlineKeyboard([
-    [
-      Markup.button.callback("✅ Confirm", confirmData),
-      Markup.button.callback("↩️ Cancel", cancelData),
-    ],
+    [Markup.button.callback(confirmLabel, confirmData), Markup.button.callback("↩️ Cancel", cancelData)],
   ]);
 }
 
 export function backToMenuKeyboard() {
-  return Markup.inlineKeyboard([[Markup.button.callback("⬅️ Back to Menu", "menu:home")]]);
+  return Markup.inlineKeyboard([[Markup.button.callback("⬅️ Menu", "menu:home")]]);
 }

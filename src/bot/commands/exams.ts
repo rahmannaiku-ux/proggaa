@@ -1,60 +1,60 @@
 import type { Telegraf } from "telegraf";
-import type { ExamSummary } from "../../types/domain";
 import type { ProggaaBotContext } from "../../types/session";
 import type { ServiceContainer } from "../../services/container";
 import { requireLinked } from "../middleware/guards";
-import { formatExamCard } from "../messages/formatters";
-import { examCardKeyboard } from "../keyboards/cards";
 import { backToMenuKeyboard } from "../keyboards/mainMenu";
+import { encounterCardKeyboard } from "../keyboards/cards";
+import { formatEncounterCard } from "../messages/formatters";
+import { ICON, TERMS, heading } from "../messages/brand";
+
+const MAX_CARDS = 8;
 
 export function registerExamsCommand(bot: Telegraf<ProggaaBotContext>, services: ServiceContainer) {
   bot.command("exams", async (ctx) => {
-    await sendExams(ctx, services);
+    await sendEncounters(ctx, services);
   });
 
   bot.action("menu:exams", async (ctx) => {
     await ctx.answerCbQuery();
-    await sendExams(ctx, services);
+    await sendEncounters(ctx, services);
   });
 }
 
-function groupExams(exams: ExamSummary[]) {
-  const upcoming = exams.filter((e) => e.status === "SCHEDULED" || e.status === "STARTING_SOON");
-  const live = exams.filter((e) => e.status === "LIVE" || e.status === "ENDING_SOON");
-  const completed = exams.filter((e) => e.status === "COMPLETED");
-  return { upcoming, live, completed };
-}
-
-export async function sendExams(ctx: ProggaaBotContext, services: ServiceContainer) {
+async function sendEncounters(ctx: ProggaaBotContext, services: ServiceContainer) {
   if (await requireLinked(ctx)) return;
 
-  const proggaaUserId = ctx.auth.proggaaUserId!;
-  const exams =
-    ctx.auth.role === "TEACHER"
-      ? await services.examService.getExamsForTeacher(proggaaUserId)
-      : await services.examService.getExamsForStudent(proggaaUserId);
+  const exams = await services.examService.getExamsForStudent(ctx.auth.proggaaUserId!);
+  const open = exams
+    .filter((e) => e.status !== "COMPLETED" && e.status !== "CANCELLED")
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const done = exams
+    .filter((e) => e.status === "COMPLETED")
+    .sort((a, b) => b.startsAt.localeCompare(a.startsAt))
+    .slice(0, 3);
 
-  if (exams.length === 0) {
-    await ctx.reply("📝 You don't have any exams yet.", backToMenuKeyboard());
+  if (open.length === 0 && done.length === 0) {
+    await ctx.reply(
+      `${heading(ICON.encounter, `Your ${TERMS.exams}`)}\n\nNo ${TERMS.exams} yet. They appear here once a ${TERMS.teacher.toLowerCase()} schedules one in your ${TERMS.courses}.`,
+      { parse_mode: "Markdown", ...backToMenuKeyboard() }
+    );
     return;
   }
 
-  const { upcoming, live, completed } = groupExams(exams);
-
-  const sendGroup = async (title: string, group: ExamSummary[]) => {
-    if (group.length === 0) return;
-    await ctx.reply(title, { parse_mode: "Markdown" });
-    for (const exam of group) {
-      await ctx.reply(formatExamCard(exam), {
+  await ctx.reply(heading(ICON.encounter, `Your ${TERMS.exams}`), { parse_mode: "Markdown" });
+  for (const exam of open.slice(0, MAX_CARDS)) {
+    await ctx.reply(formatEncounterCard(exam), {
+      parse_mode: "Markdown",
+      ...encounterCardKeyboard(exam, services.deepLinkService),
+    });
+  }
+  if (done.length > 0) {
+    await ctx.reply("*Recently finished*", { parse_mode: "Markdown" });
+    for (const exam of done) {
+      await ctx.reply(formatEncounterCard(exam), {
         parse_mode: "Markdown",
-        ...examCardKeyboard(exam, services.deepLinkService),
+        ...encounterCardKeyboard(exam, services.deepLinkService),
       });
     }
-  };
-
-  await sendGroup("🔴 *Live*", live);
-  await sendGroup("🗓️ *Upcoming*", upcoming);
-  await sendGroup("✅ *Completed*", completed);
-
-  await ctx.reply("⬅️", backToMenuKeyboard());
+  }
+  await ctx.reply("Open an Encounter on Proggaa to take it.", backToMenuKeyboard());
 }

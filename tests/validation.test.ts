@@ -1,50 +1,63 @@
 import { describe, expect, it } from "vitest";
-import { isValidEntityId, validateBoundedText, TEXT_LIMITS } from "../src/utils/validation";
+import {
+  CALLBACK_DATA_MAX_BYTES,
+  TEXT_LIMITS,
+  isPlausibleCallbackData,
+  isValidEntityId,
+  normalizeLinkCode,
+  validateBoundedText,
+} from "../src/utils/validation";
 
-describe("isValidEntityId", () => {
-  it("accepts typical mock entity ids", () => {
+describe("entity ids", () => {
+  it("accepts cuid-style ids and rejects anything else", () => {
+    expect(isValidEntityId("cmupg4f2r0001potwtsprguon")).toBe(true);
     expect(isValidEntityId("pay_1")).toBe(true);
-    expect(isValidEntityId("exam_physics_midterm")).toBe(true);
-    expect(isValidEntityId("qb_100")).toBe(true);
-  });
-
-  it("rejects empty strings", () => {
-    expect(isValidEntityId("")).toBe(false);
-  });
-
-  it("rejects ids with path-like or injection characters", () => {
-    expect(isValidEntityId("../etc/passwd")).toBe(false);
-    expect(isValidEntityId("pay_1; DROP TABLE payments")).toBe(false);
-    expect(isValidEntityId("<script>")).toBe(false);
-  });
-
-  it("rejects ids longer than 64 characters", () => {
-    expect(isValidEntityId("a".repeat(65))).toBe(false);
-  });
-
-  it("accepts ids exactly at the 64 character limit", () => {
-    expect(isValidEntityId("a".repeat(64))).toBe(true);
+    for (const bad of ["", "a b", "../etc/passwd", "id;DROP TABLE", "x".repeat(65), "id\n", "<script>"]) {
+      expect(isValidEntityId(bad)).toBe(false);
+    }
   });
 });
 
-describe("validateBoundedText", () => {
-  it("trims and accepts text within the limit", () => {
-    const result = validateBoundedText("  hello world  ", 50);
-    expect(result).toEqual({ ok: true, value: "hello world" });
+describe("callback data", () => {
+  it("rejects data longer than Telegram allows or with control characters", () => {
+    expect(isPlausibleCallbackData("menu:home")).toBe(true);
+    expect(isPlausibleCallbackData("x".repeat(CALLBACK_DATA_MAX_BYTES))).toBe(true);
+    expect(isPlausibleCallbackData("x".repeat(CALLBACK_DATA_MAX_BYTES + 1))).toBe(false);
+    expect(isPlausibleCallbackData("menu:home\u0000")).toBe(false);
+  });
+});
+
+describe("link codes", () => {
+  it("accepts the website's XXXX-XXXX-XXXX format, in any case, with spaces around it", () => {
+    expect(normalizeLinkCode("nkvy-5rr3-mt68")).toBe("NKVY-5RR3-MT68");
+    expect(normalizeLinkCode("  NKVY-5RR3-MT68 \n")).toBe("NKVY-5RR3-MT68");
   });
 
-  it("rejects empty or whitespace-only text", () => {
-    const result = validateBoundedText("   ", 50);
-    expect(result.ok).toBe(false);
+  it("rejects anything that is not a link code", () => {
+    for (const bad of ["", "hello", "NKVY5RR3MT68", "NKVY-5RR3", "NKVY-5RR3-MT68-EXTRA", "NKVY-5RR3-MT6!", "/start"]) {
+      expect(normalizeLinkCode(bad)).toBeNull();
+    }
   });
+});
 
-  it("rejects text over the limit", () => {
-    const result = validateBoundedText("a".repeat(TEXT_LIMITS.supportMessage + 1), TEXT_LIMITS.supportMessage);
-    expect(result.ok).toBe(false);
+describe("bounded text", () => {
+  it("trims, and rejects empty or too long input", () => {
+    expect(validateBoundedText("  hello  ", 10)).toEqual({ ok: true, value: "hello" });
+    expect(validateBoundedText("   ", 10).ok).toBe(false);
+    expect(validateBoundedText("x".repeat(TEXT_LIMITS.rejectReason + 1), TEXT_LIMITS.rejectReason).ok).toBe(false);
   });
+});
 
-  it("accepts text exactly at the limit", () => {
-    const result = validateBoundedText("a".repeat(TEXT_LIMITS.aiTopic), TEXT_LIMITS.aiTopic);
-    expect(result.ok).toBe(true);
+describe("logging never leaks secrets", () => {
+  it("scrubs anything shaped like a bot token, even inside an error message", async () => {
+    const { scrub, redact } = await import("../src/utils/logger");
+    const token = "1234567890:" + "A".repeat(35); // token-shaped, not a real token
+    expect(scrub(`request to https://api.telegram.org/bot${token}/getMe failed`)).toBe("request to https://api.telegram.org/bot[bot-token]/getMe failed");
+    expect(redact({ error: `bad ${token}`, token: "x", apiKey: "y", telegramId: "1" })).toEqual({
+      error: "bad [bot-token]",
+      token: "[REDACTED]",
+      apiKey: "[REDACTED]",
+      telegramId: "1",
+    });
   });
 });
