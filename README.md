@@ -9,7 +9,36 @@ A completely standalone Telegram bot for **Proggaa** (LMS/e-learning platform), 
 ## Status: All 15 phases implemented
 
 | Phase | What | Status |
-|---|---|---|
+|## Connecting to the real Proggaa website
+
+The bot ships with demo data. To use real data, set these in `.env`:
+
+```
+PROGGAA_PROVIDER=api
+PROGGAA_API_URL=https://your-proggaa-domain.com   # the website
+PROGGAA_API_KEY=...                               # same value as PROGGAA_API_KEY on the website
+PROGGAA_BOT_WEBHOOK_SECRET=...                    # same value as PROGGAA_BOT_WEBHOOK_SECRET on the website
+```
+
+On the website set `PROGGAA_BOT_WEBHOOK_URL=https://<where-the-bot-runs>/proggaa/events` so it can push events.
+
+| Works against the real website | Still demo data (the website has no API for it yet) |
+|---|---|
+| Account linking (code from Settings > Telegram), unlink | Support tickets |
+| Profile, XP, streak, role | Announcements sent from Telegram |
+| Missions (courses), exams, results, achievements | AI tutor and question generation |
+| Notifications list, live push of website events | Question bank |
+| Payments: list, view, admin approve/reject, pending queue | Notification preferences (stored by the bot) |
+| Teacher: courses, exams, live exam monitor, grading counts, analytics | |
+| Admin: statistics, user lists | |
+
+Not possible from Telegram on purpose: submitting a payment Transaction ID, and disqualifying a student. Both stay on the website.
+
+Every request carries `X-Api-Key`; the website only answers for accounts that were linked to Telegram, and re-checks the role on each call. Website events arrive signed with HMAC-SHA256 (`X-Proggaa-Signature`) and are verified before anything is parsed.
+
+Website routes the bot uses: `/api/telegram/link`, `/api/bot/{users,achievements,courses,exams,results,payments,notifications}`, `/api/bot/payments/pending`, `/api/bot/admin/{statistics,users}`, `/api/bot/teacher/{courses,exams}` and `/api/bot/teacher/exams/live`.
+
+---|---|---|
 | 1 | Project foundation | ✅ |
 | 2 | Bot init + `/start` + `/help` | ✅ |
 | 3 | Service/adapter architecture | ✅ |

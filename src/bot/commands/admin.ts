@@ -25,9 +25,9 @@ export function registerAdminCommand(bot: Telegraf<ProggaaBotContext>, services:
     await ctx.answerCbQuery();
     if (await requireRole(ctx, ["ADMIN"])) return;
     const [students, teachers, admins] = await Promise.all([
-      services.adminService.listUsers("STUDENT"),
-      services.adminService.listUsers("TEACHER"),
-      services.adminService.listUsers("ADMIN"),
+      services.adminService.listUsers("STUDENT", ctx.auth.proggaaUserId),
+      services.adminService.listUsers("TEACHER", ctx.auth.proggaaUserId),
+      services.adminService.listUsers("ADMIN", ctx.auth.proggaaUserId),
     ]);
     await ctx.reply(
       `👥 *Users*\n\n🎓 Students: ${students.length}\n👨‍🏫 Teachers: ${teachers.length}\n👨‍💼 Admins: ${admins.length}`,
@@ -38,14 +38,14 @@ export function registerAdminCommand(bot: Telegraf<ProggaaBotContext>, services:
   bot.action("admin:courses", async (ctx) => {
     await ctx.answerCbQuery();
     if (await requireRole(ctx, ["ADMIN"])) return;
-    const stats = await services.adminService.getStatistics();
+    const stats = await services.adminService.getStatistics(ctx.auth.proggaaUserId);
     await ctx.reply(`📚 ${stats.courseCount.toLocaleString()} courses on the platform.`, backToMenuKeyboard());
   });
 
   bot.action("admin:exams", async (ctx) => {
     await ctx.answerCbQuery();
     if (await requireRole(ctx, ["ADMIN"])) return;
-    const stats = await services.adminService.getStatistics();
+    const stats = await services.adminService.getStatistics(ctx.auth.proggaaUserId);
     await ctx.reply(
       `📝 ${stats.examCount.toLocaleString()} exams total, ${stats.liveExamCount} live right now.`,
       backToMenuKeyboard()
@@ -289,8 +289,8 @@ export async function handleGroupAnnouncementTextInput(ctx: ProggaaBotContext, _
 export async function sendAdminDashboard(ctx: ProggaaBotContext, services: ServiceContainer) {
   if (await requireRole(ctx, ["ADMIN"])) return;
 
-  const stats = await services.adminService.getStatistics();
-  const pendingPayments = await services.paymentService.getPendingPayments();
+  const stats = await services.adminService.getStatistics(ctx.auth.proggaaUserId);
+  const pendingPayments = await services.paymentService.getPendingPayments(ctx.auth.proggaaUserId);
 
   const lines = [
     "👨‍💼 *Proggaa Admin*",

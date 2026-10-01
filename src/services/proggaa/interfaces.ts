@@ -65,7 +65,7 @@ export interface ProggaaAchievementService {
 export interface ProggaaCourseService {
   getCoursesForStudent(proggaaUserId: string): Promise<Course[]>;
   getCoursesForTeacher(proggaaUserId: string): Promise<Course[]>;
-  getCourseById(courseId: string): Promise<Course | null>;
+  getCourseById(courseId: string, proggaaUserId?: string): Promise<Course | null>;
   /**
    * Aggregate teacher-facing analytics. Lives here rather than as a
    * separate service because, with the current mock data's granularity
@@ -83,8 +83,8 @@ export interface ProggaaCourseService {
 export interface ProggaaExamService {
   getExamsForStudent(proggaaUserId: string): Promise<ExamSummary[]>;
   getExamsForTeacher(proggaaUserId: string): Promise<ExamSummary[]>;
-  getExamById(examId: string): Promise<ExamSummary | null>;
-  getLiveExamStatus(examId: string): Promise<LiveExamStatus | null>;
+  getExamById(examId: string, proggaaUserId?: string): Promise<ExamSummary | null>;
+  getLiveExamStatus(examId: string, proggaaUserId?: string): Promise<LiveExamStatus | null>;
   getLiveExamsForTeacher(proggaaUserId: string): Promise<LiveExamStatus[]>;
 }
 
@@ -94,8 +94,8 @@ export interface ProggaaExamService {
 
 export interface ProggaaResultService {
   getResultsForStudent(proggaaUserId: string): Promise<ExamResult[]>;
-  getResultById(resultId: string): Promise<ExamResult | null>;
-  getPendingManualGradingCount(examId: string): Promise<number>;
+  getResultById(resultId: string, proggaaUserId?: string): Promise<ExamResult | null>;
+  getPendingManualGradingCount(examId: string, proggaaUserId?: string): Promise<number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -103,8 +103,8 @@ export interface ProggaaResultService {
 // ---------------------------------------------------------------------------
 
 export interface ProggaaPaymentService {
-  getPendingPayments(): Promise<Payment[]>;
-  getPaymentById(paymentId: string): Promise<Payment | null>;
+  getPendingPayments(adminProggaaUserId?: string): Promise<Payment[]>;
+  getPaymentById(paymentId: string, proggaaUserId?: string): Promise<Payment | null>;
   /** All payments (any status) submitted by this student, most recent first. */
   getPaymentsForStudent(proggaaUserId: string): Promise<Payment[]>;
   /**
@@ -159,8 +159,8 @@ export interface ProggaaAIService {
 // ---------------------------------------------------------------------------
 
 export interface ProggaaAdminService {
-  getStatistics(): Promise<AdminStatistics>;
-  listUsers(role?: ProggaaRole): Promise<ProggaaUser[]>;
+  getStatistics(adminProggaaUserId?: string): Promise<AdminStatistics>;
+  listUsers(role?: ProggaaRole, adminProggaaUserId?: string): Promise<ProggaaUser[]>;
   disqualifyStudent(examId: string, studentId: string, adminProggaaUserId: string, reason: string): Promise<void>;
   getAlerts(): Promise<SystemAlert[]>;
 }

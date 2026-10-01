@@ -76,7 +76,7 @@ export function registerTeacherCommand(bot: Telegraf<ProggaaBotContext>, service
     }
 
     for (const exam of completed) {
-      const pendingCount = await services.resultService.getPendingManualGradingCount(exam.id);
+      const pendingCount = await services.resultService.getPendingManualGradingCount(exam.id, ctx.auth.proggaaUserId);
       if (pendingCount === 0) continue;
       await ctx.reply(
         `📝 *Manual Grading Required*\n\n${exam.title}\n\n${pendingCount} answer${pendingCount === 1 ? "" : "s"} require review.`,
@@ -125,7 +125,7 @@ export function registerTeacherCommand(bot: Telegraf<ProggaaBotContext>, service
     const courseId = ctx.match[1];
     if (!isValidEntityId(courseId)) return ctx.reply("Invalid course reference.");
 
-    const course = await services.courseService.getCourseById(courseId);
+    const course = await services.courseService.getCourseById(courseId, ctx.auth.proggaaUserId);
     if (!course) return ctx.reply("That course no longer exists.");
 
     startWizard(ctx, "announcement", "awaiting_message", { courseId, courseName: course.name });
@@ -208,7 +208,7 @@ export async function sendTeacherDashboard(ctx: ProggaaBotContext, services: Ser
 
   let pendingGrading = 0;
   for (const exam of completedExams) {
-    pendingGrading += await services.resultService.getPendingManualGradingCount(exam.id);
+    pendingGrading += await services.resultService.getPendingManualGradingCount(exam.id, proggaaUserId);
   }
 
   const lines = [

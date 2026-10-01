@@ -131,7 +131,9 @@ export type NotificationEventType =
   | "PAYMENT_APPROVED"
   | "PAYMENT_REJECTED"
   | "ENROLLMENT_COMPLETED"
-  | "SUPPORT_TICKET_REPLIED";
+  | "SUPPORT_TICKET_REPLIED"
+  | "NEW_ANNOUNCEMENT"
+  | "SYSTEM_NOTICE";
 
 export interface NotificationEvent {
   type: NotificationEventType;

@@ -2,6 +2,9 @@ import "dotenv/config";
 import { z } from "zod";
 
 const providerEnum = z.enum(["mock", "api"]);
+// Blank `.env` lines (as in .env.example) mean "not set", same as the helpers below.
+const blankToUndefinedEarly = (v: unknown) => (v === "" ? undefined : v);
+const optionalProvider = () => z.preprocess(blankToUndefinedEarly, providerEnum.optional());
 
 // A .env file with a deliberately-blank placeholder line (e.g.
 // `WEBHOOK_URL=`, as .env.example has for fields you only need in
@@ -29,15 +32,25 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
 
-  PROGGAA_USER_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_COURSE_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_EXAM_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_RESULT_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_PAYMENT_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_NOTIFICATION_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_AI_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_ADMIN_PROVIDER: providerEnum.default("mock"),
-  PROGGAA_LINK_PROVIDER: providerEnum.default("mock"),
+  // One switch for every service the website can answer. "mock" (default)
+  // keeps the in-memory demo data; "api" talks to the real Proggaa website.
+  // Any PROGGAA_<SERVICE>_PROVIDER below overrides this for just that service.
+  PROGGAA_PROVIDER: z.preprocess(blankToUndefinedEarly, providerEnum.default("mock")),
+  PROGGAA_ACHIEVEMENT_PROVIDER: optionalProvider(),
+
+  // Shared secret the website signs its event pushes with (its
+  // PROGGAA_BOT_WEBHOOK_SECRET). Events are received at POST /proggaa/events.
+  PROGGAA_BOT_WEBHOOK_SECRET: optionalString(),
+
+  PROGGAA_USER_PROVIDER: optionalProvider(),
+  PROGGAA_COURSE_PROVIDER: optionalProvider(),
+  PROGGAA_EXAM_PROVIDER: optionalProvider(),
+  PROGGAA_RESULT_PROVIDER: optionalProvider(),
+  PROGGAA_PAYMENT_PROVIDER: optionalProvider(),
+  PROGGAA_NOTIFICATION_PROVIDER: optionalProvider(),
+  PROGGAA_AI_PROVIDER: optionalProvider(),
+  PROGGAA_ADMIN_PROVIDER: optionalProvider(),
+  PROGGAA_LINK_PROVIDER: optionalProvider(),
 
   DEV_SEED_ADMIN_TELEGRAM_ID: optionalString(),
 

@@ -34,7 +34,7 @@ export function registerExamHelpCommand(bot: Telegraf<ProggaaBotContext>, servic
 
     const examId = ctx.match[1];
     const problemKey = ctx.match[2];
-    const exam = await services.examService.getExamById(examId);
+    const exam = await services.examService.getExamById(examId, ctx.auth.proggaaUserId);
     if (!exam) {
       await ctx.reply("That exam couldn't be found.");
       return;

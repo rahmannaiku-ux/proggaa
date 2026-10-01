@@ -36,6 +36,18 @@ import { MockAnnouncementService } from "./announcements/MockAnnouncementService
 import { MockTelegramLinkService } from "./linking/mock/MockTelegramLinkService";
 import { InMemoryGroupService, type GroupService } from "./groups/GroupService";
 import { PushingNotificationService } from "./notifications/PushingNotificationService";
+import { ApiClient } from "./proggaa/api/ApiClient";
+import {
+  ApiProggaaAchievementService,
+  ApiProggaaAdminService,
+  ApiProggaaCourseService,
+  ApiProggaaExamService,
+  ApiProggaaNotificationService,
+  ApiProggaaPaymentService,
+  ApiProggaaResultService,
+  ApiProggaaUserService,
+} from "./proggaa/api/ApiServices";
+import { ApiTelegramLinkService } from "./proggaa/api/ApiTelegramLinkService";
 
 /**
  * Everything the bot needs, resolved once at startup.
@@ -69,63 +81,74 @@ export interface ServiceContainer {
   groupService: GroupService;
 }
 
+type Provider = "mock" | "api";
+
 function unsupportedProvider(serviceName: string): never {
-  throw new Error(
-    `${serviceName}: provider "api" is not implemented yet. ` +
-      `Implement Api${serviceName} and wire it in services/container.ts.`
-  );
+  throw new Error(`${serviceName}: provider "api" is not implemented for this service.`);
 }
 
 export function buildServiceContainer(): ServiceContainer {
+  // Each service follows PROGGAA_PROVIDER unless its own switch says otherwise.
+  const pick = (own?: Provider): Provider => own ?? env.PROGGAA_PROVIDER;
+  const providers = {
+    user: pick(env.PROGGAA_USER_PROVIDER),
+    course: pick(env.PROGGAA_COURSE_PROVIDER),
+    exam: pick(env.PROGGAA_EXAM_PROVIDER),
+    result: pick(env.PROGGAA_RESULT_PROVIDER),
+    payment: pick(env.PROGGAA_PAYMENT_PROVIDER),
+    notification: pick(env.PROGGAA_NOTIFICATION_PROVIDER),
+    admin: pick(env.PROGGAA_ADMIN_PROVIDER),
+    achievement: pick(env.PROGGAA_ACHIEVEMENT_PROVIDER),
+    link: pick(env.PROGGAA_LINK_PROVIDER),
+  };
+
+  // Only built when some service really uses it, so the demo setup needs no API settings.
+  let apiClient: ApiClient | null = null;
+  const api = (): ApiClient => {
+    apiClient ??= new ApiClient(env.PROGGAA_API_URL ?? env.PROGGAA_WEB_URL, env.PROGGAA_API_KEY ?? "");
+    return apiClient;
+  };
+
   const userService: ProggaaUserService =
-    env.PROGGAA_USER_PROVIDER === "mock" ? new MockProggaaUserService() : unsupportedProvider("ProggaaUserService");
+    providers.user === "api" ? new ApiProggaaUserService(api()) : new MockProggaaUserService();
 
   const courseService: ProggaaCourseService =
-    env.PROGGAA_COURSE_PROVIDER === "mock"
-      ? new MockProggaaCourseService()
-      : unsupportedProvider("ProggaaCourseService");
+    providers.course === "api" ? new ApiProggaaCourseService(api()) : new MockProggaaCourseService();
 
   const examService: ProggaaExamService =
-    env.PROGGAA_EXAM_PROVIDER === "mock" ? new MockProggaaExamService() : unsupportedProvider("ProggaaExamService");
+    providers.exam === "api" ? new ApiProggaaExamService(api()) : new MockProggaaExamService();
 
   const resultService: ProggaaResultService =
-    env.PROGGAA_RESULT_PROVIDER === "mock"
-      ? new MockProggaaResultService()
-      : unsupportedProvider("ProggaaResultService");
+    providers.result === "api" ? new ApiProggaaResultService(api()) : new MockProggaaResultService();
 
   const paymentService: ProggaaPaymentService =
-    env.PROGGAA_PAYMENT_PROVIDER === "mock"
-      ? new MockProggaaPaymentService()
-      : unsupportedProvider("ProggaaPaymentService");
+    providers.payment === "api" ? new ApiProggaaPaymentService(api()) : new MockProggaaPaymentService();
 
   const baseNotificationService: ProggaaNotificationService =
-    env.PROGGAA_NOTIFICATION_PROVIDER === "mock"
-      ? new MockProggaaNotificationService()
-      : unsupportedProvider("ProggaaNotificationService");
+    providers.notification === "api"
+      ? new ApiProggaaNotificationService(api())
+      : new MockProggaaNotificationService();
 
   const notificationPreferenceService: NotificationPreferenceService =
     new MockNotificationPreferenceService();
 
   const aiService: ProggaaAIService =
-    env.PROGGAA_AI_PROVIDER === "mock" ? new MockProggaaAIService() : unsupportedProvider("ProggaaAIService");
+    env.PROGGAA_AI_PROVIDER === "api" ? unsupportedProvider("ProggaaAIService") : new MockProggaaAIService();
 
   const adminService: ProggaaAdminService =
-    env.PROGGAA_ADMIN_PROVIDER === "mock"
-      ? new MockProggaaAdminService()
-      : unsupportedProvider("ProggaaAdminService");
+    providers.admin === "api" ? new ApiProggaaAdminService(api()) : new MockProggaaAdminService();
 
   const questionBankService: QuestionBankService = new MockQuestionBankService();
 
   const supportService: SupportService = new MockSupportService();
 
-  const achievementService: ProggaaAchievementService = new MockProggaaAchievementService();
+  const achievementService: ProggaaAchievementService =
+    providers.achievement === "api" ? new ApiProggaaAchievementService(api()) : new MockProggaaAchievementService();
 
   const announcementService: AnnouncementService = new MockAnnouncementService();
 
   const linkService: TelegramLinkService =
-    env.PROGGAA_LINK_PROVIDER === "mock"
-      ? new MockTelegramLinkService()
-      : unsupportedProvider("TelegramLinkService");
+    providers.link === "api" ? new ApiTelegramLinkService(api()) : new MockTelegramLinkService();
 
   const deepLinkService = new DeepLinkService();
 

@@ -13,6 +13,6 @@ export function registerStatsCommand(bot: Telegraf<ProggaaBotContext>, services:
 
 export async function sendStats(ctx: ProggaaBotContext, services: ServiceContainer) {
   if (await requireRole(ctx, ["ADMIN"])) return;
-  const stats = await services.adminService.getStatistics();
+  const stats = await services.adminService.getStatistics(ctx.auth.proggaaUserId);
   await ctx.reply(formatAdminStats(stats), { parse_mode: "Markdown", ...backToMenuKeyboard() });
 }

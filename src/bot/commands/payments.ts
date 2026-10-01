@@ -37,7 +37,7 @@ export function registerPaymentsCommand(bot: Telegraf<ProggaaBotContext>, servic
     await ctx.answerCbQuery();
     if (await requireLinked(ctx)) return;
     const paymentId = ctx.match[1];
-    const payment = await services.paymentService.getPaymentById(paymentId);
+    const payment = await services.paymentService.getPaymentById(paymentId, ctx.auth.proggaaUserId);
     if (!payment || payment.studentId !== ctx.auth.proggaaUserId) {
       await ctx.reply("That payment couldn't be found.");
       return;
@@ -50,7 +50,7 @@ export function registerPaymentsCommand(bot: Telegraf<ProggaaBotContext>, servic
     await ctx.answerCbQuery();
     if (await requireLinked(ctx)) return;
     const paymentId = ctx.match[1];
-    const payment = await services.paymentService.getPaymentById(paymentId);
+    const payment = await services.paymentService.getPaymentById(paymentId, ctx.auth.proggaaUserId);
     if (!payment || payment.studentId !== ctx.auth.proggaaUserId) {
       await ctx.reply("That payment couldn't be found.");
       return;
@@ -167,7 +167,7 @@ export function registerPaymentsCommand(bot: Telegraf<ProggaaBotContext>, servic
 export async function sendPendingPayments(ctx: ProggaaBotContext, services: ServiceContainer) {
   if (await requireRole(ctx, ["ADMIN"])) return;
 
-  const payments = await services.paymentService.getPendingPayments();
+  const payments = await services.paymentService.getPendingPayments(ctx.auth.proggaaUserId);
   if (payments.length === 0) {
     await ctx.reply("💰 No pending payments right now.", backToMenuKeyboard());
     return;
@@ -201,7 +201,7 @@ async function sendPaymentCenter(ctx: ProggaaBotContext, services: ServiceContai
 }
 
 async function sendPaymentDetail(ctx: ProggaaBotContext, services: ServiceContainer, paymentId: string) {
-  const payment = await services.paymentService.getPaymentById(paymentId);
+  const payment = await services.paymentService.getPaymentById(paymentId, ctx.auth.proggaaUserId);
   if (!payment || payment.studentId !== ctx.auth.proggaaUserId) {
     await ctx.reply("That payment couldn't be found.");
     return;
