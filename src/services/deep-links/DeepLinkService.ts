@@ -34,6 +34,7 @@ export class DeepLinkService {
   support() { return this.build("/support"); }
   payment(paymentId: string) { return this.build(`/payments/${encodeURIComponent(paymentId)}`); }
   telegramSettings() { return this.build("/settings/telegram"); }
+  profile() { return this.build("/profile"); }
 
   // --- mentors ---
   mentorDashboard() { return this.build("/mentor/dashboard"); }

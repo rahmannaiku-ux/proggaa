@@ -53,6 +53,12 @@ export class ApiClient {
     return this.parse<T>(res);
   }
 
+  /** Multipart POST, for files (a photo a Mentor sent). Gets a longer timeout than JSON calls. */
+  async postForm<T>(path: string, form: FormData): Promise<T> {
+    const res = await this.request("POST", this.url(path), form, this.timeoutMs * 3);
+    return this.parse<T>(res);
+  }
+
   async delete<T>(path: string, body: unknown): Promise<T> {
     const res = await this.request("DELETE", this.url(path), body);
     return this.parse<T>(res);
@@ -66,18 +72,20 @@ export class ApiClient {
     return url.toString();
   }
 
-  private async request(method: string, url: string, body?: unknown): Promise<Response> {
+  private async request(method: string, url: string, body?: unknown, timeoutMs = this.timeoutMs): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const isForm = body instanceof FormData;
     try {
       return await this.fetchImpl(url, {
         method,
         headers: {
           "X-Api-Key": this.apiKey,
           Accept: "application/json",
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+          // A FormData body sets its own multipart Content-Type with the boundary.
+          ...(body === undefined || isForm ? {} : { "Content-Type": "application/json" }),
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
         signal: controller.signal,
       });
     } catch {

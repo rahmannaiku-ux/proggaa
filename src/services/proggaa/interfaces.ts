@@ -41,6 +41,18 @@ import type {
   StoreView,
   TeacherAnalytics,
 } from "../../types/domain";
+import type {
+  AdminChange,
+  BuilderChange,
+  BuilderImageTarget,
+  BuilderMission,
+  CoMentorRequest,
+  ManagedMission,
+  ManagedStoreItem,
+  ManagedUser,
+  NewMissionInput,
+  PublicProfile,
+} from "../../types/editing";
 
 export interface ProggaaUserService {
   getUserById(proggaaUserId: string): Promise<ProggaaUser | null>;
@@ -184,4 +196,40 @@ export interface TelegramLinkService {
   linkWithToken(telegramId: string, token: string): Promise<LinkTokenResult>;
   /** Removes the link for a Telegram id. */
   unlink(telegramId: string): Promise<void>;
+}
+
+/**
+ * Editing a Mission from Telegram: the website's own builder rules (main mentor,
+ * co-mentor or admin; the same validation and picture checks). Destructive changes
+ * are confirmed in the chat before they are sent.
+ */
+export interface ProggaaBuilderService {
+  getMission(mentorProggaaUserId: string, missionId: string): Promise<BuilderMission | null>;
+  createMission(mentorProggaaUserId: string, input: NewMissionInput): Promise<{ id: string }>;
+  /** Returns the new item's id for a create, and how many were added for a list. */
+  apply(mentorProggaaUserId: string, missionId: string, change: BuilderChange): Promise<{ id?: string; added?: number }>;
+  /** Stores a picture (Google Drive on the website) and sets it on the Mission or Patrol. */
+  uploadImage(
+    mentorProggaaUserId: string,
+    missionId: string,
+    target: BuilderImageTarget,
+    image: { bytes: Uint8Array; filename: string; mimeType: string },
+    patrolId?: string
+  ): Promise<void>;
+}
+
+/** The admin panel's everyday tools. Each change is confirmed in the chat first. */
+export interface ProggaaAdminManageService {
+  findUser(adminProggaaUserId: string, identifier: string): Promise<ManagedUser | null>;
+  listCoMentorRequests(adminProggaaUserId: string): Promise<CoMentorRequest[]>;
+  listMissions(adminProggaaUserId: string): Promise<ManagedMission[]>;
+  listStoreItems(adminProggaaUserId: string): Promise<ManagedStoreItem[]>;
+  /** Returns the account again after a change to it, so the card can be redrawn. */
+  apply(adminProggaaUserId: string, change: AdminChange): Promise<{ user?: ManagedUser; message?: string }>;
+}
+
+/** The "about me" part of the website's profile page. */
+export interface ProggaaProfileService {
+  getProfile(proggaaUserId: string): Promise<PublicProfile>;
+  updateProfile(proggaaUserId: string, change: { headline?: string; bio?: string }): Promise<void>;
 }

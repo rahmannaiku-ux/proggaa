@@ -49,11 +49,12 @@ export const HELP_TEXT = (role: "STUDENT" | "TEACHER" | "ADMIN" | "NONE") => {
       "/leaderboard  /medals  /achievements  /progress  /studyplan",
       "",
       "*Updates*",
-      "/notifications  /announcements  /settings  /support"
+      "/notifications  /announcements  /settings  /support",
+      "/profile — your headline and bio"
     );
   }
-  if (role === "TEACHER" || role === "ADMIN") lines.push("", "*Mentor*", "/teacher — your Missions, Encounters and grading");
-  if (role === "ADMIN") lines.push("", "*Admin*", "/admin — admin tools", "/payments — payments waiting for verification", "/stats — platform numbers");
+  if (role === "TEACHER" || role === "ADMIN") lines.push("", "*Mentor*", "/teacher — your Missions, Encounters and grading", "/edit — edit a Mission: details, pictures, Operations, Patrols, live classes, publishing");
+  if (role === "ADMIN") lines.push("", "*Admin*", "/admin — admin tools", "/payments — payments waiting for verification", "/stats — platform numbers", "In /admin: find a user (role, suspend, coins), Mission status and discounts, co-Mentor requests, store items, categories, announce to everyone");
   return lines.join("\n");
 };
 

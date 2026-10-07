@@ -7,6 +7,9 @@ import { handleRejectReasonTextInput } from "../commands/payments";
 import { handleNoteTextInput } from "../commands/learn";
 import { handleCouponTextInput, handleSearchTextInput, handleTxidTextInput } from "../commands/catalog";
 import { handleToolTextInput } from "../commands/mentorTools";
+import { handleEditorTextInput } from "../commands/editor";
+import { handleAdminManageTextInput } from "../commands/adminManage";
+import { handleProfileTextInput } from "../commands/profile";
 import { isWizardExpired, clearWizard } from "./wizard";
 
 /**
@@ -43,6 +46,12 @@ export function registerTextRouter(bot: Telegraf<ProggaaBotContext>, services: S
           return handleTxidTextInput(ctx, services, text);
         case "tool":
           return handleToolTextInput(ctx, services, text);
+        case "ed":
+          return handleEditorTextInput(ctx, services, text);
+        case "am":
+          return handleAdminManageTextInput(ctx, services, text);
+        case "profile":
+          return handleProfileTextInput(ctx, services, text);
         default:
           clearWizard(ctx);
       }

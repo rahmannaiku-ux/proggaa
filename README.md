@@ -18,14 +18,16 @@ Most of Proggaa works inside the chat. Everything is read from, and done through
 | **Schedule** | `/live` (live and upcoming classes), `/calendar`, `/exams` and `/results` (your Encounters and scores). |
 | **Updates** | `/notifications`, `/announcements`, `/settings` (choose which Proggaa notifications are sent to Telegram), and Proggaa's own notifications arrive in the chat by themselves. |
 | **Mentors** | `/teacher`: your Missions, Encounters, live monitoring, grading counts, analytics; and **Announce to a Mission**, **Grant access**, **Issue a Medal** (preview, then confirm). |
-| **Admins** | `/admin`, `/payments` (verify or reject with a reason), `/stats`, Group Assistant tools. |
+| **Edit Missions** | `/edit` (Mentors, admins): title, subtitle, description, price, level, free/paid, thumbnail and class routine (send a photo, stored in Proggaa's Google Drive), publish/unpublish, Encounters on/off, and the whole outline: add (one or a pasted list), rename and delete Operations, chapters, class types and Patrols; edit a Patrol's title, description, video link, free preview and thumbnail; schedule a live class; create a new Mission. |
+| **Admins** | `/admin`, `/payments` (verify or reject with a reason), `/stats`; find a user (change role, suspend, adjust Proggy Coins), Mission status and discounts, co-Mentor requests, Proggy Store items on/off, new category, announce to everyone; Group Assistant tools. |
+| **Profile** | `/profile`: your headline and bio. |
 
 ### What stays on the website, on purpose
 - **Watching the video.** Patrol videos play in Proggaa's protected player, which also measures how much you really watched
   (that is what completes a Patrol and earns XP). Every Patrol has a "Watch on Proggaa" button; the bot never shows a video link.
 - **Taking an Encounter (exam).** Exams use fullscreen and tab-switch monitoring and time limits that a chat cannot enforce.
   The bot lists them, reminds you and shows results; the button opens the exam.
-- **Uploading files, editing profile details, the Mission builder, payment devices.**
+- **Uploading lesson files (PDFs), Encounter and Challenge authoring, verified profile details (name, phone, email), payment devices.**
 
 All times are Bangladesh time.
 
@@ -43,7 +45,7 @@ npm run dev              # polling mode
 `/settings/telegram`, press **Generate code**, then send `/link` and the code to the bot.
 
 ```bash
-npm test          # 125 tests, no network
+npm test          # 133 tests, no network
 npm run typecheck
 npm run build     # compiles to dist/
 ```

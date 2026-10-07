@@ -54,6 +54,7 @@ export function moreKeyboard() {
     [Markup.button.callback(`${ICON.medal} Medals`, "menu:medals"), Markup.button.callback("📢 Announcements", "menu:announcements")],
     [Markup.button.callback(`${ICON.achievement} Achievements`, "menu:achievements"), Markup.button.callback("📈 Progress", "menu:progress")],
     [Markup.button.callback("🗓️ What's next", "menu:studyplan"), Markup.button.callback(`${ICON.payment} Payments`, "menu:payments")],
+    [Markup.button.callback("👤 Profile", "menu:profile")],
     [Markup.button.callback("⬅️ Menu", "menu:home")],
   ]);
 }
@@ -86,7 +87,7 @@ export function teacherDashboardKeyboard() {
       Markup.button.callback(`${ICON.live} Live ${TERMS.exams}`, "teacher:live"),
       Markup.button.callback("📝 Grading", "teacher:grading"),
     ],
-    [Markup.button.callback("📊 Analytics", "teacher:analytics")],
+    [Markup.button.callback(`✏️ Edit ${TERMS.courses}`, "ed:home"), Markup.button.callback("📊 Analytics", "teacher:analytics")],
     [Markup.button.callback("📢 Announce", "tool:announce"), Markup.button.callback("➕ Grant access", "tool:grant")],
     [Markup.button.callback(`${ICON.medal} Issue a Medal`, "tool:medal")],
     [Markup.button.callback("⬅️ Menu", "menu:home")],
@@ -99,7 +100,10 @@ export function adminDashboardKeyboard(hasGroups: boolean) {
       Markup.button.callback(`${ICON.payment} Payments`, "admin:payments"),
       Markup.button.callback(`${TERMS.student}s & users`, "admin:users"),
     ],
-    [Markup.button.callback("📊 Statistics", "admin:stats")],
+    [Markup.button.callback("📊 Statistics", "admin:stats"), Markup.button.callback("🔎 Find a user", "am:user")],
+    [Markup.button.callback(`${ICON.mission} ${TERMS.courses} & discounts`, "am:missions"), Markup.button.callback(`🤝 Co-${TERMS.teacher} requests`, "am:requests")],
+    [Markup.button.callback("🛍️ Store items", "am:store"), Markup.button.callback("🏷️ New category", "am:category")],
+    [Markup.button.callback("📣 Announce to everyone", "am:announce")],
   ];
   if (hasGroups) {
     rows.push([

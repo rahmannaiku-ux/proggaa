@@ -2,7 +2,9 @@ import { env } from "../config/env";
 import type {
   NotificationPreferenceService,
   ProggaaAchievementService,
+  ProggaaAdminManageService,
   ProggaaAdminService,
+  ProggaaBuilderService,
   ProggaaCatalogService,
   ProggaaCommunityService,
   ProggaaCourseService,
@@ -13,6 +15,7 @@ import type {
   ProggaaNotificationFeed,
   ProggaaNotificationService,
   ProggaaPaymentService,
+  ProggaaProfileService,
   ProggaaResultService,
   ProggaaStoreService,
   ProggaaUserService,
@@ -40,6 +43,11 @@ import {
   ApiProggaaUserService,
 } from "./proggaa/api/ApiServices";
 import { ApiTelegramLinkService } from "./proggaa/api/ApiTelegramLinkService";
+import {
+  ApiProggaaAdminManageService,
+  ApiProggaaBuilderService,
+  ApiProggaaProfileService,
+} from "./proggaa/api/ApiEditingServices";
 
 /**
  * Everything the bot needs, resolved once at startup.
@@ -67,6 +75,9 @@ export interface ServiceContainer {
   preferenceService: NotificationPreferenceService;
   achievementService: ProggaaAchievementService;
   adminService: ProggaaAdminService;
+  builderService: ProggaaBuilderService;
+  adminManageService: ProggaaAdminManageService;
+  profileService: ProggaaProfileService;
   linkService: TelegramLinkService;
   deepLinkService: DeepLinkService;
   groupService: GroupService;
@@ -89,6 +100,9 @@ export function buildApiServices(api: ApiClient) {
     notificationFeed: new ApiProggaaNotificationFeed(api),
     achievementService: new ApiProggaaAchievementService(api),
     adminService: new ApiProggaaAdminService(api),
+    builderService: new ApiProggaaBuilderService(api),
+    adminManageService: new ApiProggaaAdminManageService(api),
+    profileService: new ApiProggaaProfileService(api),
     linkService: new ApiTelegramLinkService(api),
   };
 }

@@ -29,6 +29,9 @@ import { registerCatalogCommands } from "./commands/catalog";
 import { registerStoreCommands } from "./commands/store";
 import { registerSocialCommands } from "./commands/social";
 import { registerMentorTools } from "./commands/mentorTools";
+import { registerEditorCommands } from "./commands/editor";
+import { registerAdminManageCommands } from "./commands/adminManage";
+import { registerProfileCommands } from "./commands/profile";
 import { registerTeacherCommand } from "./commands/teacher";
 import { registerAdminCommand } from "./commands/admin";
 import { registerGroupAssistant } from "./commands/group";
@@ -70,11 +73,14 @@ export function createBot(services: ServiceContainer, token: string = env.BOT_TO
   registerCatalogCommands(bot, services);
   registerStoreCommands(bot, services);
   registerSocialCommands(bot, services);
+  registerProfileCommands(bot, services);
 
   // Mentors and admins
   registerTeacherCommand(bot, services);
   registerMentorTools(bot, services);
+  registerEditorCommands(bot, services);
   registerAdminCommand(bot, services);
+  registerAdminManageCommands(bot, services);
 
   // Group Assistant: the same bot in a configured Telegram group. Registered
   // after the commands, before the text router; chatScope keeps the two modes apart.

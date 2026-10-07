@@ -26,6 +26,7 @@ import type {
   TeacherAnalytics,
 } from "../../src/types/domain";
 import type { ServiceContainer } from "../../src/services/container";
+import type { BuilderMission, ManagedUser } from "../../src/types/editing";
 import type { FeedCursor, LinkTokenResult, TelegramLinkService } from "../../src/services/proggaa/interfaces";
 import { DeepLinkService } from "../../src/services/deep-links/DeepLinkService";
 import { InMemoryGroupService } from "../../src/services/groups/GroupService";
@@ -241,6 +242,58 @@ export class FakeFeed {
   }
 }
 
+export function freshBuilderMission(): BuilderMission {
+  return {
+    id: "course_physics",
+    title: "Physics 1st Paper",
+    subtitle: null,
+    description: "Mechanics, waves and more.",
+    level: "ALL_LEVELS",
+    status: "DRAFT",
+    isFree: false,
+    priceTaka: 800,
+    examsEnabled: false,
+    hasThumbnail: false,
+    hasRoutineImage: false,
+    categoryName: "Science",
+    enrollmentCount: 12,
+    discount: null,
+    operations: [
+      {
+        id: "op_1",
+        title: "Vectors",
+        chapters: [
+          {
+            id: "ch_1",
+            title: "Basics",
+            classTypes: [
+              {
+                id: "ct_1",
+                title: "Foundation Class",
+                patrols: [{ id: "pt_1", title: "What is a vector", description: null, youtubeVideoId: "abc123", isPreview: false, hasThumbnail: false, scheduledStart: null }],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export const MANAGED_STUDENT: ManagedUser = {
+  id: "user_student_1",
+  name: "Ayesha Rahman",
+  email: null,
+  phone: "017•••••001",
+  role: "STUDENT",
+  isSuspended: false,
+  xp: 320,
+  coinBalance: 250,
+  streakDays: 12,
+  enrollmentCount: 2,
+  createdAt: hoursFromNow(-2000),
+};
+
 /** Who may do what, mirroring the website's checks, so authorization tests are meaningful. */
 export type Calls = { name: string; args: unknown[] }[];
 
@@ -253,6 +306,9 @@ export function buildFakeContainer(
   const feed = new FakeFeed();
   const payments = freshPayments();
   const isAdmin = (id: string) => USERS.find((u) => u.id === id)?.role === "ADMIN";
+  const isMentor = (id: string) => ["TEACHER", "ADMIN"].includes(USERS.find((u) => u.id === id)?.role ?? "");
+  const builderMission = freshBuilderMission();
+  const managedUser: ManagedUser = { ...MANAGED_STUDENT };
 
   const container: ServiceContainer = {
     userService: {
@@ -363,6 +419,63 @@ export function buildFakeContainer(
         if (!isAdmin(id)) throw new UnauthorizedError("Admin access required.");
         return role ? USERS.filter((u) => u.role === role) : USERS;
       },
+    },
+    builderService: {
+      getMission: async (u, id) => {
+        if (!isMentor(u)) throw new UnauthorizedError("Mentor access required.");
+        return id === builderMission.id ? builderMission : null;
+      },
+      createMission: async (u, input) => {
+        if (!isMentor(u)) throw new UnauthorizedError("Mentor access required.");
+        record("createMission", u, input);
+        return { id: builderMission.id };
+      },
+      apply: async (u, missionId, change) => {
+        if (!isMentor(u)) throw new UnauthorizedError("Mentor access required.");
+        record("builder.apply", u, missionId, change);
+        if (change.op === "mission.publish" && change.publish && builderMission.operations.length === 0) {
+          throw new ValidationError("Add at least one operation before publishing.");
+        }
+        if (change.op === "mission.publish") builderMission.status = change.publish ? "PUBLISHED" : "DRAFT";
+        if (change.op === "mission.update" && change.title) builderMission.title = change.title;
+        if (change.op === "bulk.add") return { added: change.text.split(/\r?\n/).filter((l) => l.trim()).length };
+        return {};
+      },
+      uploadImage: async (u, missionId, target, image, patrolId) => {
+        if (!isMentor(u)) throw new UnauthorizedError("Mentor access required.");
+        record("uploadImage", u, missionId, target, image.mimeType, patrolId);
+        if (target === "thumbnail") builderMission.hasThumbnail = true;
+      },
+    },
+    adminManageService: {
+      findUser: async (u, identifier) => {
+        if (!isAdmin(u)) throw new UnauthorizedError("Admin access required.");
+        return identifier === "01700000001" ? managedUser : null;
+      },
+      listCoMentorRequests: async (u) => {
+        if (!isAdmin(u)) throw new UnauthorizedError("Admin access required.");
+        return [{ id: "req_1", missionTitle: "Physics 1st Paper", mentorName: "Rafi Ahmed", requestedByName: "Kabir Hossain", roleLabel: null, createdAt: hoursFromNow(-5) }];
+      },
+      listMissions: async (u) => {
+        if (!isAdmin(u)) throw new UnauthorizedError("Admin access required.");
+        return [{ id: "course_physics", title: "Physics 1st Paper", status: "PUBLISHED", isFree: false, priceTaka: 800, mentorName: "Kabir Hossain", enrollmentCount: 12, discount: null }];
+      },
+      listStoreItems: async (u) => {
+        if (!isAdmin(u)) throw new UnauthorizedError("Admin access required.");
+        return [{ id: "item_pdf", title: "Formula sheet", type: "PDF", priceCoins: 50, isPublished: true }];
+      },
+      apply: async (u, change) => {
+        if (!isAdmin(u)) throw new UnauthorizedError("Admin access required.");
+        record("admin.apply", u, change);
+        if (change.op === "user.suspend") managedUser.isSuspended = change.suspended;
+        if (change.op === "user.role") managedUser.role = change.role;
+        if (change.op === "coins.adjust") managedUser.coinBalance += change.amount;
+        return change.op.startsWith("user.") || change.op === "coins.adjust" ? { user: { ...managedUser } } : {};
+      },
+    },
+    profileService: {
+      getProfile: async () => ({ headline: "Future engineer", bio: null }),
+      updateProfile: async (u, change) => record("updateProfile", u, change),
     },
     linkService: link,
     deepLinkService: new DeepLinkService("https://proggaa.example"),

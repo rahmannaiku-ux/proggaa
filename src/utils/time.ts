@@ -96,3 +96,19 @@ export function relativeTime(value: Date | string | number, now: Date | number =
 
   return future ? `in ${text}` : `${text} ago`;
 }
+
+/**
+ * Reads a Bangladesh wall-clock time typed as "YYYY-MM-DD HH:MM" (a "T" between the
+ * two parts works too) and returns it as "YYYY-MM-DDTHH:MM", the form the website's
+ * own schedule fields take. Null when it isn't a real date and time.
+ */
+export function parseBstDateTimeInput(text: string): string | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})$/.exec(text.trim());
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m.map(Number) as [number, number, number, number, number, number];
+  if (mo < 1 || mo > 12 || h > 23 || mi > 59) return null;
+  const check = new Date(Date.UTC(y, mo - 1, d));
+  if (check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${y}-${pad(mo)}-${pad(d)}T${pad(h)}:${pad(mi)}`;
+}

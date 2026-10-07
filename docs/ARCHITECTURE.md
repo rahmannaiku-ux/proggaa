@@ -67,11 +67,13 @@ call these website routes with `X-Api-Key`:
 | Notifications list and **feed** | `GET /api/bot/notifications`, `GET /api/bot/notifications/feed` |
 | Payments (own, pending queue, approve, reject) | `/api/bot/payments*` |
 | Mentor | `/api/bot/teacher/*`, `POST /api/bot/mentor/announcements`, `POST /api/bot/mentor/access` |
-| Admin | `/api/bot/admin/statistics`, `/api/bot/admin/users` |
+| Admin | `/api/bot/admin/statistics`, `/api/bot/admin/users`, `GET`/`POST /api/bot/admin/manage` |
+| Edit Missions | `GET`/`POST /api/bot/mentor/builder`, `POST /api/bot/mentor/images` (multipart photo) |
+| Profile | `GET`/`POST /api/bot/profile` |
 
 Every write route calls the same service the website's Server Action calls (`services/checkout.ts`, `services/enrollment.ts`,
 `services/mission-announcements.ts`, `lib/gamification/coins.ts`, `lib/enrollment/grant-access.ts`,
-`lib/certificate/manual-issue.ts`), so a payment started in Telegram goes through exactly the same checks as one started on the site.
+`lib/certificate/manual-issue.ts`, `services/mission-builder.ts`, `services/admin-tools.ts`), so a payment started in Telegram goes through exactly the same checks as one started on the site.
 
 Rules: no business rule is re-implemented in the bot (level curve, grading letters aside, see below, payment
 verification, enrolment all stay in Proggaa); a missing capability is added to `/api/bot/*` rather than faked.
@@ -142,12 +144,16 @@ no knowledge of the bot.
 
 ## 10. Admin model
 
-Admins can see statistics, the payment queue and approve or reject (reject asks for a reason the hero sees), and manage
-the Group Assistant. Anything deeper (disqualifying a student, editing users) stays on the website on purpose.
+Admins can see statistics, the payment queue and approve or reject (reject asks for a reason the hero sees), find an
+account and change its role, suspend it or correct its Proggy Coins, set Mission status and discounts, review co-Mentor
+requests, switch store items, add categories, announce to everyone, and manage the Group Assistant. Each change is
+confirmed in the chat and runs through the same service as the admin panel (`services/admin-tools.ts`), so the hierarchy
+rules (only a super admin touches admins) are the website's. Mentors edit their Missions through
+`services/mission-builder.ts`, the code behind the website's builder.
 
 ## 11. Testing
 
-`npm test` (125 tests): unit tests for mappers, validation, time, deep links, formatters, rate limiting; the real
+`npm test` (133 tests): unit tests for mappers, validation, time, deep links, formatters, rate limiting; the real
 `createBot()` pipeline driven with hand-built Telegram updates for linking, role authorization, group refusal, payment
 confirmation, tampered callbacks, flood control and failure messages; the relay with a fake feed and sender. Network is
 never touched. Not covered automatically: a real Telegram chat, and the website's database (those are checked by
