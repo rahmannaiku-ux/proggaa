@@ -14,7 +14,7 @@ const envSchema = z.object({
   BOT_TOKEN: z.string().min(1, "BOT_TOKEN is required"),
 
   // --- Proggaa (the website) ---
-  // The public address of the website, e.g. https://progga-zeta.vercel.app.
+  // The public address of the website, e.g. https://prooggaa.com.
   // Used for every link the bot sends.
   PROGGAA_WEB_URL: z.preprocess(blankToUndefined, z.string().url().default("http://localhost:3000")),
   // Where the bot calls /api/bot/*. Defaults to PROGGAA_WEB_URL, which is right

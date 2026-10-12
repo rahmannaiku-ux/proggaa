@@ -57,7 +57,7 @@ See `.env.example` (every variable is documented there). The ones that matter:
 | Variable | |
 |---|---|
 | `BOT_TOKEN` | from BotFather |
-| `PROGGAA_WEB_URL` | the website's public address (links) |
+| `PROGGAA_WEB_URL` | the website's public address (links): `https://prooggaa.com` in production, no trailing slash |
 | `PROGGAA_API_URL` | optional, defaults to `PROGGAA_WEB_URL` |
 | `PROGGAA_API_KEY` | shared secret, same as on the website |
 | `BOT_MODE` | `polling` locally, `webhook` on a web host |
