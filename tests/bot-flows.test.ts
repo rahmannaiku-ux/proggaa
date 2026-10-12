@@ -19,6 +19,30 @@ describe("start and linking", () => {
     expect(h.lastText()).toMatch(/Connect your Proggaa account first/);
   });
 
+  it("answers a private message that is not a command, instead of staying silent", async () => {
+    const h = buildTestBot();
+    const stranger = freshTelegramId();
+    await say(h, stranger, "hello");
+    expect(h.lastText()).toMatch(/Connect Proggaa/);
+
+    const tg = await linkAs(h, STUDENT.id);
+    const before = h.sent.length;
+    await say(h, tg, "what can you do?");
+    expect(h.sent.length).toBe(before + 1);
+    expect(h.lastText()).toMatch(/menu below/);
+
+    await say(h, tg, "/nosuchcommand");
+    expect(h.lastText()).toMatch(/don't know that command/);
+  });
+
+  it("stays quiet when a group message is not a command", async () => {
+    const h = buildTestBot();
+    const tg = await linkAs(h, STUDENT.id);
+    const before = h.sent.length;
+    await h.bot.handleUpdate(textUpdate(tg, -100555, "hello everyone", "supergroup"));
+    expect(h.sent.length).toBe(before);
+  });
+
   it("links with a valid code, then greets by name", async () => {
     const h = buildTestBot();
     const tg = await linkAs(h, STUDENT.id);

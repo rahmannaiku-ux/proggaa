@@ -11,10 +11,14 @@ import { handleEditorTextInput } from "../commands/editor";
 import { handleAdminManageTextInput } from "../commands/adminManage";
 import { handleProfileTextInput } from "../commands/profile";
 import { isWizardExpired, clearWizard } from "./wizard";
+import { startKeyboard } from "../keyboards/mainMenu";
+import { NOT_A_COMMAND_LINKED, NOT_A_COMMAND_UNLINKED, UNKNOWN_COMMAND } from "../messages/copy";
 
 /**
  * Where free text goes. Only a private chat reaches the flows below (a link
- * code, a reject reason, a group announcement); everything else falls through.
+ * code, a reject reason, a group announcement). Anything left over, including
+ * a command nobody registered, gets a short reply with the menu, so a private
+ * message is never met with silence. Group chatter is left alone.
  */
 export function registerTextRouter(bot: Telegraf<ProggaaBotContext>, services: ServiceContainer) {
   bot.on("text", async (ctx, next) => {
@@ -57,6 +61,8 @@ export function registerTextRouter(bot: Telegraf<ProggaaBotContext>, services: S
       }
     }
 
-    return next();
+    const linked = ctx.auth.linked;
+    const reply = text.startsWith("/") ? UNKNOWN_COMMAND : linked ? NOT_A_COMMAND_LINKED : NOT_A_COMMAND_UNLINKED;
+    await ctx.reply(reply, startKeyboard(linked, ctx.auth.role));
   });
 }

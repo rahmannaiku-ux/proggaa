@@ -18,6 +18,13 @@ export const WELCOME_UNLINKED =
   `upcoming Encounters and live classes, and send you the same notifications you get on the website.\n\n` +
   `Tap *Connect Proggaa* to begin, or send /link.`;
 
+/** Replies to a private message that is neither a known command nor an answer the bot was waiting for. */
+export const UNKNOWN_COMMAND = "🤔 I don't know that command. Send /help to see everything I can do, or pick from the menu below.";
+export const NOT_A_COMMAND_LINKED =
+  "👋 I can't chat, but I can take you where you need to go. Pick from the menu below, or send /help to see every command.";
+export const NOT_A_COMMAND_UNLINKED =
+  "👋 I can't chat, but I can help once your account is connected. Tap Connect Proggaa below, or send /help.";
+
 export const HELP_TEXT = (role: "STUDENT" | "TEACHER" | "ADMIN" | "NONE") => {
   const lines = [
     `${BRAND} *Help*`,

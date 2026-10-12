@@ -45,7 +45,7 @@ npm run dev              # polling mode
 `/settings/telegram`, press **Generate code**, then send `/link` and the code to the bot.
 
 ```bash
-npm test          # 133 tests, no network
+npm test          # 135 tests, no network
 npm run typecheck
 npm run build     # compiles to dist/
 ```
