@@ -2,6 +2,7 @@ import type { MiddlewareFn } from "telegraf";
 import type { ProggaaBotContext } from "../../types/session";
 import type { ServiceContainer } from "../../services/container";
 import { logger } from "../../utils/logger";
+import { apiErrorOf } from "../../services/proggaa/api/ApiClient";
 
 /**
  * Resolves `ctx.auth` on every update.
@@ -41,6 +42,11 @@ export function createAuthMiddleware(services: ServiceContainer): MiddlewareFn<P
         role: currentRole ?? linked.role,
       };
     } catch (error) {
+      if (apiErrorOf(error).apiCode === "DELETION_PENDING") {
+        // Not an error: the account is set to be deleted, and the website says so.
+        ctx.auth = { telegramId, linked: false, deletionPending: true };
+        return next();
+      }
       logger.error("auth.resolve_failed", { telegramId, error: String(error) });
       ctx.auth = { telegramId, linked: false };
     }

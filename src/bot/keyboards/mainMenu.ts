@@ -1,5 +1,5 @@
 import { Markup } from "telegraf";
-import type { ProggaaRole } from "../../types/domain";
+import type { HomeInfo, ProggaaRole } from "../../types/domain";
 import { ICON, TERMS } from "../messages/brand";
 
 /**
@@ -10,7 +10,7 @@ import { ICON, TERMS } from "../messages/brand";
  * strings are only routing, never permission.
  */
 
-export function startKeyboard(linked: boolean, role?: ProggaaRole) {
+export function startKeyboard(linked: boolean, role?: ProggaaRole, home?: HomeInfo | null, links?: { completeProfile: string }) {
   if (!linked) {
     return Markup.inlineKeyboard([
       [Markup.button.callback(`${ICON.link} Connect Proggaa`, "start:link")],
@@ -19,6 +19,8 @@ export function startKeyboard(linked: boolean, role?: ProggaaRole) {
   }
 
   const rows = [
+    ...(home?.resume ? [[Markup.button.callback(`▶️ Continue: ${home.resume.title}`.slice(0, 60), `pt:${home.resume.patrolId}`)]] : []),
+    ...(home?.needsSchool && links ? [[Markup.button.url("🏫 Confirm college & district", links.completeProfile)]] : []),
     [Markup.button.callback("🏠 Dashboard", "menu:dashboard")],
     [
       Markup.button.callback(`${ICON.mission} ${TERMS.courses}`, "menu:missions"),

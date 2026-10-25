@@ -15,6 +15,7 @@ import type {
   LiveExamStatus,
   Medal,
   MissionOutline,
+  HomeInfo,
   OperationOutline,
   PatrolDetail,
   Payment,
@@ -317,6 +318,18 @@ export class ApiProggaaLearningService implements ProggaaLearningService {
 
   async addNote(proggaaUserId: string, patrolId: string, text: string): Promise<void> {
     await this.api.post(`/api/bot/patrols/${enc(patrolId)}/note`, { userId: proggaaUserId, text });
+  }
+
+  async getHome(proggaaUserId: string): Promise<HomeInfo> {
+    const h = await this.api.get<{
+      resume: { patrolId: string; title: string; missionTitle: string; watchedPct: number } | null;
+      needsSchool: boolean;
+    }>("/api/bot/home", { userId: proggaaUserId });
+    const r = h?.resume;
+    return {
+      resume: r ? { patrolId: r.patrolId, title: r.title, missionTitle: r.missionTitle, watchedPercent: r.watchedPct ?? 0 } : null,
+      needsSchool: h?.needsSchool ?? false,
+    };
   }
 }
 

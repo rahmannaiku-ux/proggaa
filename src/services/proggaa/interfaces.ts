@@ -30,6 +30,7 @@ import type {
   LiveExamStatus,
   Medal,
   MissionOutline,
+  HomeInfo,
   NotificationCategory,
   NotificationPreferences,
   OperationOutline,
@@ -112,6 +113,8 @@ export interface ProggaaLearningService {
   /** Null when the Patrol does not exist; throws UnauthorizedError when it is locked for this hero. */
   getPatrol(proggaaUserId: string, patrolId: string): Promise<PatrolDetail | null>;
   addNote(proggaaUserId: string, patrolId: string, text: string): Promise<void>;
+  /** The Patrol to continue with, and whether the profile still needs the college step. */
+  getHome(proggaaUserId: string): Promise<HomeInfo>;
 }
 
 /** Finding Missions, enrolling and paying. Prices and rules all come from Proggaa. */

@@ -34,6 +34,8 @@ export interface AuthContext {
   linked: boolean;
   proggaaUserId?: string;
   role?: ProggaaRole;
+  /** The linked account is waiting out its 30 days before deletion: nothing works until it is kept. */
+  deletionPending?: boolean;
 }
 
 export type ChatMode = "private" | "configured_group" | "unconfigured_group" | "other";

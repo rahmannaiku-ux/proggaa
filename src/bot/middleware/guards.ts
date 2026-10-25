@@ -1,6 +1,6 @@
 import type { ProggaaBotContext } from "../../types/session";
 import type { ProggaaRole } from "../../types/domain";
-import { NOT_LINKED_PROMPT, UNAUTHORIZED } from "../messages/copy";
+import { DELETION_PENDING, NOT_LINKED_PROMPT, UNAUTHORIZED } from "../messages/copy";
 import { logger } from "../../utils/logger";
 
 /**
@@ -16,7 +16,8 @@ import { logger } from "../../utils/logger";
 
 export async function requireLinked(ctx: ProggaaBotContext): Promise<boolean> {
   if (!ctx.auth.linked || !ctx.auth.proggaaUserId) {
-    await ctx.reply(NOT_LINKED_PROMPT);
+    if (ctx.auth.deletionPending) await ctx.reply(DELETION_PENDING, { parse_mode: "Markdown" });
+    else await ctx.reply(NOT_LINKED_PROMPT);
     return true;
   }
   return false;

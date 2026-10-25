@@ -4,7 +4,10 @@ import type { ServiceContainer } from "../../services/container";
 import { backToMenuKeyboard, moreKeyboard, startKeyboard } from "../keyboards/mainMenu";
 import { clearWizard } from "../handlers/wizard";
 import { show } from "../screens";
-import { HELP_TEXT, WELCOME_LINKED, WELCOME_UNLINKED } from "../messages/copy";
+import { Markup } from "telegraf";
+import { DELETION_PENDING, HELP_TEXT, SCHOOL_NUDGE, WELCOME_LINKED, WELCOME_UNLINKED } from "../messages/copy";
+import { esc, progressBar } from "../messages/brand";
+import { logger } from "../../utils/logger";
 
 export function registerStartCommand(bot: Telegraf<ProggaaBotContext>, services: ServiceContainer) {
   bot.command("start", async (ctx) => {
@@ -36,11 +39,34 @@ export function registerStartCommand(bot: Telegraf<ProggaaBotContext>, services:
 }
 
 export async function sendStartScreen(ctx: ProggaaBotContext, services: ServiceContainer) {
-  if (ctx.auth.linked && ctx.auth.proggaaUserId) {
-    const user = await services.userService.getUserById(ctx.auth.proggaaUserId);
-    await show(ctx, WELCOME_LINKED(user?.name ?? "there"), {
+  if (ctx.auth.deletionPending) {
+    await show(ctx, DELETION_PENDING, {
       parse_mode: "Markdown",
-      ...startKeyboard(true, ctx.auth.role),
+      ...Markup.inlineKeyboard([[Markup.button.url("Sign in to keep it", services.deepLinkService.login())]]),
+    });
+    return;
+  }
+
+  if (ctx.auth.linked && ctx.auth.proggaaUserId) {
+    const userId = ctx.auth.proggaaUserId;
+    const [user, home] = await Promise.all([
+      services.userService.getUserById(userId),
+      // The menu still works if this extra lookup fails.
+      services.learningService.getHome(userId).catch((error) => {
+        logger.warn("home.lookup_failed", { error: String(error) });
+        return null;
+      }),
+    ]);
+    let text = WELCOME_LINKED(user?.name ?? "there");
+    if (home?.resume) {
+      const r = home.resume;
+      text += `\n\n▶️ *Pick up where you left off*\n${esc(r.title)}\n_${esc(r.missionTitle)}_`;
+      if (r.watchedPercent > 0) text += `\n${progressBar(r.watchedPercent)} ${r.watchedPercent}%`;
+    }
+    if (home?.needsSchool) text += `\n\n${SCHOOL_NUDGE}`;
+    await show(ctx, text, {
+      parse_mode: "Markdown",
+      ...startKeyboard(true, ctx.auth.role, home, { completeProfile: services.deepLinkService.completeProfile() }),
     });
     return;
   }

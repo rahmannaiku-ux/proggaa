@@ -14,6 +14,7 @@ import type {
   LiveExamStatus,
   Medal,
   MissionOutline,
+  HomeInfo,
   NotificationCategory,
   NotificationPreferences,
   OperationOutline,
@@ -93,6 +94,11 @@ export const MISSION_OUTLINE: MissionOutline = {
     { id: "op_waves", title: "Waves", patrolCount: 1, completedCount: 0 },
   ],
   resume: { patrolId: "pt_2", title: "Dot product" },
+};
+
+export const HOME: HomeInfo = {
+  resume: { patrolId: "pt_2", title: "Dot product", missionTitle: "Physics 1st Paper", watchedPercent: 40 },
+  needsSchool: true,
 };
 
 export const OPERATION: OperationOutline = {
@@ -363,6 +369,7 @@ export function buildFakeContainer(
         return id === PATROL.id ? PATROL : null;
       },
       addNote: async (u, id, text) => record("addNote", u, id, text),
+      getHome: async () => HOME,
     },
     catalogService: {
       browse: async (_u, o) => ({ page: o.page ?? 1, pageSize: 6, total: 2, missions: [CATALOG_PAID, CATALOG_FREE].filter((m) => !o.query || m.title.toLowerCase().includes(o.query.toLowerCase())) }),

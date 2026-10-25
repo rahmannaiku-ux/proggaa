@@ -39,6 +39,7 @@ export const HELP_TEXT = (role: "STUDENT" | "TEACHER" | "ADMIN" | "NONE") => {
     lines.push(
       "",
       "*Study*",
+      "/continue — carry on with the Patrol you were watching",
       "/dashboard — level, XP, Proggy Coins and what is next",
       "/missions — your Missions: open one to see its Operations and Patrols",
       "/exams  /results — your Encounters and results",
@@ -90,6 +91,10 @@ export const UNLINK_SUCCESS = `🔓 Disconnected. Use /link to connect again any
 export const UNLINK_NOT_LINKED = "No Proggaa account is connected to this chat.";
 
 export const NOT_LINKED_PROMPT = `${ICON.link} Connect your Proggaa account first with /link.`;
+export const DELETION_PENDING =
+  `${ICON.warn} Your Proggaa account is set to be deleted, so I've paused everything here.\n\n` +
+  `Changed your mind? Sign in on the website within 30 days of asking and choose *Keep my account*. Then come back and send /start.`;
+export const SCHOOL_NUDGE = `${ICON.warn} Please confirm your college and district on Proggaa; it takes a few seconds.`;
 export const UNAUTHORIZED = `🚫 Your Proggaa role can't use this.`;
 
 export const GENERIC_ERROR = `😕 Something went wrong on our side. Please try again in a moment, or use /support if it keeps happening.`;

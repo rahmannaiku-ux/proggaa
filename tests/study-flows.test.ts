@@ -282,3 +282,35 @@ describe("Mentor tools", () => {
     expect(h.services.calls).toHaveLength(0);
   });
 });
+
+describe("the home screen", () => {
+  it("offers the Patrol to carry on with, and asks for the college step", async () => {
+    const h = buildTestBot();
+    const tg = await linkAs(h, STUDENT.id);
+    await say(h, tg, "/start");
+    expect(lastShown(h)).toContain("Pick up where you left off");
+    expect(lastShown(h)).toContain("40%");
+    expect(buttons(h)).toContain("pt:pt_2");
+    expect(buttons(h)).toContain("proggaa.example/complete-profile");
+  });
+
+  it("/continue opens that Patrol", async () => {
+    const h = buildTestBot();
+    const tg = await linkAs(h, STUDENT.id);
+    await say(h, tg, "/continue");
+    expect(shown(h)).toContain("Dot product");
+    expect(buttons(h)).toContain("Watch on Proggaa");
+  });
+
+  it("pauses everything while the account is set to be deleted", async () => {
+    const h = buildTestBot();
+    const tg = await linkAs(h, STUDENT.id);
+    h.services.userService.getRole = async () => {
+      throw Object.assign(new Error("deleting"), { status: 403, apiCode: "DELETION_PENDING" });
+    };
+    await say(h, tg, "/start");
+    expect(lastShown(h)).toContain("set to be deleted");
+    await say(h, tg, "/missions");
+    expect(lastShown(h)).toContain("set to be deleted");
+  });
+});

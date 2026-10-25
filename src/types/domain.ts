@@ -127,6 +127,14 @@ export interface MissionOutline {
   resume?: { patrolId: string; title: string };
 }
 
+/** The extras on the home screen. */
+export interface HomeInfo {
+  /** The Patrol to carry on with: the one watched last if unfinished, else the next one in that Mission. */
+  resume: { patrolId: string; title: string; missionTitle: string; watchedPercent: number } | null;
+  /** The hero still has to confirm their college and district on the website. */
+  needsSchool: boolean;
+}
+
 export interface PatrolListItem {
   id: string;
   title: string;

@@ -12,7 +12,7 @@ Most of Proggaa works inside the chat. Everything is read from, and done through
 | Area | What it does |
 |---|---|
 | **Account** | `/link` with a one-time code from the website, `/unlink`. |
-| **Study** | `/missions`: open a Mission, then an Operation, then a Patrol (with ✓, 🔒 and live markers). Read a Patrol's description and resources, add a personal note, jump to the previous or next Patrol. |
+| **Study** | `/continue` (or the Continue button on the menu) goes straight back to the Patrol you were on. `/missions`: open a Mission, then an Operation, then a Patrol (with ✓, 🔒 and live markers). Read a Patrol's description and resources, add a personal note, jump to the previous or next Patrol. |
 | **Join and buy** | `/browse` and `/search`: find Missions, join free ones in one tap, or buy a paid one: optional coupon, see the amount, number and reference, then send your Transaction ID in the chat. `/payments` shows your payments. |
 | **Rewards** | `/dashboard` (level, XP, Proggy Coins, streak), `/wallet`, `/store` (spend Proggy Coins, with confirmation), `/leaderboard`, `/medals` (with verification links), `/achievements`, `/progress`, `/studyplan`. |
 | **Schedule** | `/live` (live and upcoming classes), `/calendar`, `/exams` and `/results` (your Encounters and scores). |
@@ -45,7 +45,7 @@ npm run dev              # polling mode
 `/settings/telegram`, press **Generate code**, then send `/link` and the code to the bot.
 
 ```bash
-npm test          # 135 tests, no network
+npm test          # 138 tests, no network
 npm run typecheck
 npm run build     # compiles to dist/
 ```

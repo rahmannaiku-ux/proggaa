@@ -54,6 +54,36 @@ async function startWebhook(bot: Bot) {
   return server;
 }
 
+/**
+ * The list Telegram shows when someone types "/" or taps the Menu button in a private chat.
+ * Only the everyday hero commands: Mentor and admin ones are in /help and the menu.
+ */
+async function publishCommandMenu(bot: Bot) {
+  try {
+    await bot.telegram.setMyCommands(
+      [
+        { command: "start", description: "Main menu" },
+        { command: "continue", description: "Carry on with your last Patrol" },
+        { command: "dashboard", description: "Level, XP, Proggy Coins and streak" },
+        { command: "missions", description: "Your Missions and Patrols" },
+        { command: "live", description: "Live and upcoming classes" },
+        { command: "exams", description: "Your Encounters" },
+        { command: "results", description: "Your scores" },
+        { command: "calendar", description: "What's coming up" },
+        { command: "browse", description: "Find and join Missions" },
+        { command: "wallet", description: "Proggy Coins" },
+        { command: "notifications", description: "Your latest notifications" },
+        { command: "settings", description: "Which notifications come here" },
+        { command: "help", description: "Everything I can do" },
+      ],
+      { scope: { type: "all_private_chats" } }
+    );
+  } catch (error) {
+    // Cosmetic: the bot works without it.
+    logger.warn("bot.commands_menu_failed", { error: error instanceof Error ? error.message : String(error) });
+  }
+}
+
 async function main() {
   const services = buildServiceContainer();
   const bot = createBot(services);
@@ -69,6 +99,8 @@ async function main() {
   let server: http.Server | undefined;
   if (env.BOT_MODE === "webhook") server = await startWebhook(bot);
   else await startPolling(bot);
+
+  await publishCommandMenu(bot);
 
   relay.start(env.RELAY_INTERVAL_SECONDS * 1000);
   logger.info("relay.started", { everySeconds: env.RELAY_INTERVAL_SECONDS });

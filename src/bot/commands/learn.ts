@@ -95,6 +95,19 @@ export function registerLearnCommands(bot: Telegraf<ProggaaBotContext>, services
     });
   });
 
+  // --- straight back to the Patrol the hero was on ---
+  bot.command(["continue", "resume"], async (ctx) => {
+    await guarded(ctx, null, async (userId) => {
+      const home = await services.learningService.getHome(userId);
+      if (!home.resume) {
+        return void (await show(ctx, `Nothing to continue yet. Open a ${TERMS.course} with /missions and start a Patrol.`));
+      }
+      const patrol = await services.learningService.getPatrol(userId, home.resume.patrolId);
+      if (!patrol) return void (await show(ctx, "I couldn't find that Patrol."));
+      await showPatrol(ctx, patrol, services);
+    });
+  });
+
   // --- a Patrol ---
   bot.action(new RegExp(`^pt:(${id})$`), async (ctx) => {
     await ctx.answerCbQuery();
@@ -122,6 +135,10 @@ async function showPatrol(ctx: ProggaaBotContext, p: PatrolDetail, services: Ser
     `${esc(p.missionTitle)} › ${esc(p.operationTitle)}`,
     [minutes(p.durationSeconds), p.completed ? `${ICON.done} Completed` : p.watchedSeconds > 0 ? `${Math.round(p.watchedSeconds / 60)} min watched` : ""].filter(Boolean).join(" · "),
   ];
+  if (!p.completed && p.watchedSeconds > 0 && p.durationSeconds > 0) {
+    const pct = Math.min(99, Math.round((p.watchedSeconds / p.durationSeconds) * 100));
+    lines.push(`${progressBar(pct)} ${pct}%`);
+  }
   if (p.isLive && p.scheduledStart) lines.push(`${ICON.live} Live class: ${formatDateTime(p.scheduledStart)}`);
   if (p.description) lines.push("", esc(p.description.slice(0, 700)));
   if (p.resources.length > 0) {
